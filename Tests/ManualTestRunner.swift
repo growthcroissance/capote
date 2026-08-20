@@ -8,8 +8,9 @@ struct ManualTestRunner {
         testMissingState()
         testDurationArguments()
         testDownloadArguments()
+        testThermalTerminationReasons()
         testCommandEscaping()
-        print("6 tests réussis")
+        print("7 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -35,21 +36,36 @@ struct ManualTestRunner {
 
     private static func testDurationArguments() {
         let cancelURL = URL(fileURLWithPath: "/private/tmp/fr.benjaminfarrudja.capote-test.cancel")
-        let arguments = SessionRequest.duration(300).helperArguments(cancelURL: cancelURL)
+        let resultURL = URL(fileURLWithPath: "/private/tmp/fr.benjaminfarrudja.capote-test.result")
+        let arguments = SessionRequest.duration(300).helperArguments(cancelURL: cancelURL, resultURL: resultURL)
 
         expect(arguments.contains("duration"), "arguments du mode durée")
         expect(arguments.contains("300.0"), "durée transmise au helper")
+        expect(arguments.contains("--user-uid"), "identité utilisateur transmise au helper")
     }
 
     private static func testDownloadArguments() {
         let cancelURL = URL(fileURLWithPath: "/private/tmp/fr.benjaminfarrudja.capote-test.cancel")
+        let resultURL = URL(fileURLWithPath: "/private/tmp/fr.benjaminfarrudja.capote-test.result")
         let arguments = SessionRequest.download(
             path: "/tmp/fichier avec espaces.download",
             stableSeconds: 10
-        ).helperArguments(cancelURL: cancelURL)
+        ).helperArguments(cancelURL: cancelURL, resultURL: resultURL)
 
         expect(arguments.contains("download"), "arguments du mode téléchargement")
         expect(!arguments.contains("/tmp/fichier avec espaces.download"), "chemin encodé en base64")
+    }
+
+    private static func testThermalTerminationReasons() {
+        expect(
+            SessionTerminationReason.parse(Data("thermal-serious\n".utf8)) == .thermalSerious,
+            "lecture de l’arrêt thermique sérieux"
+        )
+        expect(
+            SessionTerminationReason.parse(Data("thermal-critical".utf8)) == .thermalCritical,
+            "lecture de l’arrêt thermique critique"
+        )
+        expect(SessionTerminationReason.parse(Data("duration".utf8)) == nil, "rejet d’un motif inconnu")
     }
 
     private static func testCommandEscaping() {
