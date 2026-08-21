@@ -4,6 +4,10 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.0.0] - 2026-08-21
+
+Première version publique de Capote.
+
 ### Ajouté
 
 - licence propriétaire autorisant l’audit et la compilation locale de
@@ -11,11 +15,6 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - politique de signalement privé des vulnérabilités ;
 - page GitHub de téléchargement et workflows de validation, de publication et
   d’attestation de provenance.
-
-## [0.6.0] - 2026-08-21
-
-### Ajouté
-
 - branding GROWTH Croissance dans l’application et ses métadonnées ;
 - liens vers le site GROWTH Croissance et vers un soutien PayPal facultatif ;
 - archive de partage universelle Apple Silicon/Intel avec guide d’installation
