@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [0.5.0] - 2026-08-21
+
 ### Ajouté
 
 - restauration automatique de la veille lorsque macOS signale un état
