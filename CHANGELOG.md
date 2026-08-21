@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.2.0] - 2026-08-21
+
 ### Ajouté
 
 - option de barre des menus pour activer ou désactiver le lancement automatique
