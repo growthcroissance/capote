@@ -148,11 +148,11 @@ final class SleepControlController: ObservableObject {
         }
 
         switch isSleepDisabled {
-        case true:
+        case .some(true):
             return "Veille désactivée, y compris capot fermé"
-        case false:
+        case .some(false):
             return "Démarrer une nouvelle session"
-        case nil:
+        case .none:
             return "État de veille inconnu"
         }
     }
@@ -562,8 +562,8 @@ final class SleepControlController: ObservableObject {
 
 enum SleepDisabledState {
     static func parse(pmsetOutput: String) -> Bool? {
-        for line in pmsetOutput.split(whereSeparator: \Character.isNewline) {
-            let fields = line.split(whereSeparator: \Character.isWhitespace)
+        for line in pmsetOutput.split(whereSeparator: { $0.isNewline }) {
+            let fields = line.split(whereSeparator: { $0.isWhitespace })
 
             guard fields.count >= 2,
                   fields[0].caseInsensitiveCompare("SleepDisabled") == .orderedSame else {
