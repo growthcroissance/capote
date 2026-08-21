@@ -50,6 +50,6 @@ avertissement, il faudra :
 Le lien intégré utilise la page de don PayPal hébergée créée pour Capote :
 `https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE`. Elle propose
 4,95 €, 9,95 € ou 14,95 €, ainsi qu’un montant libre en euros. Les dons peuvent
-être ponctuels, mensuels ou annuels. Si cette page est remplacée dans PayPal,
+être ponctuels ou annuels. Si cette page est remplacée dans PayPal,
 mettre également à jour l’URL centralisée dans
 `CapoteBranding.donationURL`, le README et le guide inclus dans l’archive.
