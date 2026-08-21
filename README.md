@@ -1,4 +1,4 @@
-# Capote
+# Capote — par GROWTH Croissance
 
 Capote est un petit utilitaire personnel pour macOS. Il vit dans la barre
 des menus et permet d'empêcher la mise en veille lorsque le capot d'un MacBook
@@ -54,6 +54,24 @@ Le dépôt suit Git Flow. Les règles de travail, de validation et de sécurité
 décrites dans [AGENTS.md](AGENTS.md) et [CONTRIBUTING.md](CONTRIBUTING.md). Les
 versions publiées sont consignées dans [CHANGELOG.md](CHANGELOG.md).
 
+## Télécharger et partager
+
+Chaque archive de diffusion contient l’application et un guide d’installation.
+Elle est accompagnée d’une somme de contrôle SHA-256. La procédure complète et
+les limites de la signature actuelle sont décrites dans
+[docs/PARTAGE.md](docs/PARTAGE.md).
+
+Cette première distribution est signée localement de façon ad hoc, mais n’est
+pas encore notariée par Apple. Au premier lancement, macOS peut donc demander de
+faire un clic droit sur l’application puis de choisir « Ouvrir ». Une signature
+Developer ID et une notarisation seront nécessaires pour une diffusion sans cet
+avertissement.
+
+Capote est proposé gratuitement par
+[GROWTH Croissance](https://www.growth-croissance.com/), sans compte et sans
+collecte de données. Si l’utilitaire vous est utile, vous pouvez
+[soutenir facultativement le projet via PayPal](https://www.paypal.com/donate/?business=paypal%40growth-croissance.com&no_recurring=0&currency_code=EUR&item_name=Capote).
+
 ## Construire l'application
 
 ```sh
@@ -64,10 +82,12 @@ Le bundle est créé dans `dist/Capote.app`. Il est signé localement de façon
 ad hoc pour un usage personnel. Pour l'installer, déplacez-le manuellement dans
 le dossier Applications.
 
-Une archive `dist/Capote-0.5.0.zip` est également produite et vérifiée après
-extraction. Elle est recommandée pour mettre à jour une copie déjà placée dans
-Applications, car certains dossiers synchronisés réappliquent des attributs
-Finder aux bundles `.app`.
+Une archive universelle `dist/Capote-X.Y.Z.zip` est également produite et
+vérifiée après extraction. Elle contient un guide d’installation et fonctionne
+sur les Mac Apple Silicon et Intel. Le fichier voisin `.sha256` permet d’en
+contrôler l’intégrité. Cette archive est recommandée pour mettre à jour une copie
+déjà placée dans Applications, car certains dossiers synchronisés réappliquent
+des attributs Finder aux bundles `.app`.
 
 ## Implémentation et limites
 
