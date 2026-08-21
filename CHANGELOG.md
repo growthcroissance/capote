@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.1.0] - 2026-08-21
+
 ### Ajouté
 
 - vérification automatique et manuelle des nouvelles GitHub Releases stables ;
