@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.0.1] - 2026-08-21
+
 ### Corrigé
 
 - restauration privilégiée de secours lorsqu’un helper de session ne répond
