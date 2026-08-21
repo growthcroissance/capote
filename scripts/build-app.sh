@@ -37,6 +37,8 @@ for capote_arch in arm64 x86_64; do
         -swift-version 5 \
         -parse-as-library \
         -O \
+        "$project_dir/Sources/Capote/AppUpdateCore.swift" \
+        "$project_dir/Sources/Capote/AppUpdater.swift" \
         "$project_dir/Sources/Capote/CapoteApp.swift" \
         "$project_dir/Sources/Capote/SleepControlController.swift" \
         -o "$build_dir/Capote-$capote_arch"

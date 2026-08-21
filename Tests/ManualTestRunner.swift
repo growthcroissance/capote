@@ -10,8 +10,11 @@ struct ManualTestRunner {
         testDownloadArguments()
         testThermalTerminationReasons()
         testCommandEscaping()
+        testVersionComparison()
+        testOfficialUpdateValidation()
+        testUnsafeUpdateRejection()
         testSessionRecoveryPolicy()
-        print("8 tests réussis")
+        print("11 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -75,6 +78,65 @@ struct ManualTestRunner {
 
         expect(shellQuoted == "'/tmp/L'\"'\"'app Capote'", "échappement shell du chemin")
         expect(appleScriptQuoted == "commande \\\"test\\\"", "échappement de la chaîne AppleScript")
+    }
+
+    private static func testVersionComparison() {
+        expect(AppVersion("1.2.0")! > AppVersion("1.1.9")!, "comparaison SemVer")
+        expect(AppVersion("v2.0.0") == AppVersion("2.0.0"), "préfixe de tag accepté")
+        expect(AppVersion("1.2") == nil, "version incomplète rejetée")
+        expect(AppVersion("1.2.0-beta") == nil, "préversion rejetée")
+        expect(AppVersion("01.2.0") == nil, "zéro initial rejeté")
+    }
+
+    private static func testOfficialUpdateValidation() {
+        let release = GitHubRelease(
+            tagName: "v1.1.0",
+            htmlURL: URL(string: "https://github.com/growthcroissance/capote/releases/tag/v1.1.0")!,
+            isDraft: false,
+            isPrerelease: false
+        )
+        let update = try? AppUpdatePolicy.availableUpdate(currentVersion: "1.0.1", release: release)
+        let currentRelease = try? AppUpdatePolicy.availableUpdate(
+            currentVersion: "1.1.0",
+            release: release
+        )
+
+        expect(update?.version == AppVersion("1.1.0"), "mise à jour officielle détectée")
+        expect(currentRelease == nil, "version courante non reproposée")
+    }
+
+    private static func testUnsafeUpdateRejection() {
+        let release = GitHubRelease(
+            tagName: "v9.0.0",
+            htmlURL: URL(string: "https://example.com/capote.zip")!,
+            isDraft: false,
+            isPrerelease: false
+        )
+
+        do {
+            _ = try AppUpdatePolicy.availableUpdate(currentVersion: "1.0.0", release: release)
+            expect(false, "URL tierce rejetée")
+        } catch AppUpdateValidationError.invalidRelease {
+            expect(true, "URL tierce rejetée")
+        } catch {
+            expect(false, "erreur attendue pour une URL tierce")
+        }
+
+        let mismatchedRelease = GitHubRelease(
+            tagName: "v9.0.0",
+            htmlURL: URL(string: "https://github.com/growthcroissance/capote/releases/tag/v8.0.0")!,
+            isDraft: false,
+            isPrerelease: false
+        )
+
+        do {
+            _ = try AppUpdatePolicy.availableUpdate(currentVersion: "1.0.0", release: mismatchedRelease)
+            expect(false, "page d’un autre tag rejetée")
+        } catch AppUpdateValidationError.invalidRelease {
+            expect(true, "page d’un autre tag rejetée")
+        } catch {
+            expect(false, "erreur attendue pour un tag incohérent")
+        }
     }
 
     private static func testSessionRecoveryPolicy() {
