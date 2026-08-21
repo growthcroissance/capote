@@ -4,6 +4,12 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- vérification automatique et manuelle des nouvelles GitHub Releases stables ;
+- proposition de téléchargement guidé vers la page officielle, sans mise à jour
+  intégrée incompatible avec la signature ad hoc actuelle.
+
 ## [1.0.0] - 2026-08-21
 
 Première version publique de Capote.
