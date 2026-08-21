@@ -73,6 +73,7 @@ package_dir="$build_dir/$archive_name"
 mkdir -p "$package_dir"
 cp -R "$app_dir" "$package_dir/Capote.app"
 cp "$project_dir/packaging/LISEZ-MOI.txt" "$package_dir/LISEZ-MOI.txt"
+cp "$project_dir/LICENSE.md" "$package_dir/LICENSE.md"
 ditto \
     -c \
     -k \

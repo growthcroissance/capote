@@ -3,6 +3,9 @@ CAPOTE — PAR GROWTH CROISSANCE
 
 Capote empêche temporairement la mise en veille d’un MacBook lorsque son capot
 est fermé. L’application est gratuite, sans compte et sans collecte de données.
+Le code est consultable à des fins d’audit sous une licence propriétaire. Sa
+redistribution et la publication de versions modifiées ne sont pas autorisées.
+Les conditions complètes figurent dans le fichier LICENSE.md joint.
 
 INSTALLATION
 
@@ -25,6 +28,7 @@ utilisez « Rétablir la veille et quitter ».
 LIENS
 
 Site : https://www.growth-croissance.com/
+Code source et versions officielles : https://github.com/growthcroissance/capote
 Soutien facultatif : https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE
 
 Merci d’utiliser Capote.

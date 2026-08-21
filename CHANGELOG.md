@@ -4,6 +4,14 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- licence propriétaire autorisant l’audit et la compilation locale de
+  vérification sans autoriser la redistribution ;
+- politique de signalement privé des vulnérabilités ;
+- page GitHub de téléchargement et workflows de validation, de publication et
+  d’attestation de provenance.
+
 ## [0.6.0] - 2026-08-21
 
 ### Ajouté
