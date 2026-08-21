@@ -47,8 +47,8 @@ avertissement, il faudra :
 
 ## Soutien facultatif
 
-Le lien intégré utilise l’adresse PayPal confirmée
-`paypal@growth-croissance.com`, sans montant imposé et en euros. Pour une
-diffusion plus large, créer une page de don dans le compte PayPal Business puis
-remplacer l’URL centralisée dans `CapoteBranding.donationURL` par le lien fourni
-par PayPal.
+Le lien intégré utilise la page de don PayPal hébergée créée pour Capote :
+`https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE`. Elle accepte un
+montant libre en euros et ne propose pas de don récurrent. Si cette page est
+remplacée dans PayPal, mettre également à jour l’URL centralisée dans
+`CapoteBranding.donationURL`, le README et le guide inclus dans l’archive.

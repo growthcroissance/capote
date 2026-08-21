@@ -70,7 +70,7 @@ avertissement.
 Capote est proposé gratuitement par
 [GROWTH Croissance](https://www.growth-croissance.com/), sans compte et sans
 collecte de données. Si l’utilitaire vous est utile, vous pouvez
-[soutenir facultativement le projet via PayPal](https://www.paypal.com/donate/?business=paypal%40growth-croissance.com&no_recurring=0&currency_code=EUR&item_name=Capote).
+[soutenir facultativement le projet via PayPal](https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE).
 
 ## Construire l'application
 

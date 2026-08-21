@@ -4,7 +4,7 @@ import SwiftUI
 private enum CapoteBranding {
     static let websiteURL = URL(string: "https://www.growth-croissance.com/")!
     static let donationURL = URL(
-        string: "https://www.paypal.com/donate/?business=paypal%40growth-croissance.com&no_recurring=0&currency_code=EUR&item_name=Capote"
+        string: "https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE"
     )!
 
     static func open(_ url: URL) {
