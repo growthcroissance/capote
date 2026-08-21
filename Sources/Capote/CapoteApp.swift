@@ -48,12 +48,16 @@ struct CapoteApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            AppUpdater.shared.checkAutomatically()
+        }
     }
 
 }
 
 private struct MenuContent: View {
     @ObservedObject var controller: SleepControlController
+    @ObservedObject private var updater = AppUpdater.shared
 
     private let minutePresets = Array(stride(from: 5, through: 55, by: 5))
     private let hourPresets = Array(1...9) + [10, 12, 24]
@@ -160,6 +164,11 @@ private struct MenuContent: View {
         Button("Soutenir le projet via PayPal…") {
             CapoteBranding.open(CapoteBranding.donationURL)
         }
+
+        Button(updater.isChecking ? "Recherche de mise à jour…" : "Rechercher des mises à jour…") {
+            updater.checkManually()
+        }
+        .disabled(updater.isChecking)
 
         Divider()
 
