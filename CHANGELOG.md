@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [0.6.0] - 2026-08-21
+
 ### Ajouté
 
 - branding GROWTH Croissance dans l’application et ses métadonnées ;
