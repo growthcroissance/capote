@@ -56,6 +56,22 @@ avertissement, il faudra :
 4. agrafer le ticket de notarisation au bundle ;
 5. reconstruire et vérifier l’archive finale avec `spctl` et `codesign`.
 
+## Vérification des mises à jour dans l’application
+
+Capote interroge l’API publique `releases/latest` du dépôt officiel au lancement
+et à la demande depuis son menu. Seules une version stable au format `vX.Y.Z` et
+une page HTTPS appartenant exactement au dépôt `growthcroissance/capote` sont
+acceptées. Une proposition automatique déjà présentée n’est pas répétée pour la
+même version ; la vérification manuelle reste toujours disponible.
+
+Le mécanisme ouvre la page de la GitHub Release après confirmation. Il ne
+télécharge pas, ne décompresse pas, ne remplace pas et ne relance pas
+l’application. Un updater intégré ne doit être envisagé qu’après la mise en
+place d’une signature Developer ID stable, de la notarisation et d’un mécanisme
+de validation cryptographique des mises à jour. Jusque-là, l’utilisateur garde
+la possibilité de vérifier la somme SHA-256 et l’attestation avant de remplacer
+manuellement `Capote.app`.
+
 ## Checklist avant partage
 
 - exécuter `./scripts/test.sh` puis `./scripts/build-app.sh` ;

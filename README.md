@@ -28,6 +28,8 @@ lu ni conservé par l'application.
 - notification locale expliquant l’arrêt de sécurité thermique ;
 - restauration explicite de la veille ;
 - action « rétablir la veille et quitter ».
+- vérification des nouvelles versions officielles avec ouverture guidée de la
+  GitHub Release, sans remplacement automatique de l’application.
 
 Les sessions limitées continuent même si Capote est quittée et rétablissent la
 veille lorsque leur condition prend fin. Une session sans limite reste active
@@ -80,6 +82,14 @@ pas encore notariée par Apple. Au premier lancement, macOS peut donc demander d
 faire un clic droit sur l’application puis de choisir « Ouvrir ». Une signature
 Developer ID et une notarisation seront nécessaires pour une diffusion sans cet
 avertissement.
+
+Capote vérifie aussi au lancement si une GitHub Release stable plus récente est
+disponible. La vérification envoie uniquement une requête HTTPS publique à
+GitHub, sans compte, jeton ni identifiant propre à l’utilisateur. En raison de la
+signature ad hoc, l’application ne se remplace jamais elle-même : elle demande
+confirmation avant d’ouvrir la page officielle, où l’archive et sa somme
+SHA-256 peuvent être contrôlées. Une vérification manuelle reste disponible dans
+le menu.
 
 Les archives construites par GitHub Actions disposent également d’une
 attestation de provenance. Après téléchargement, vous pouvez vérifier l’archive

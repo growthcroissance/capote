@@ -4,6 +4,14 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.1.0] - 2026-08-21
+
+### Ajouté
+
+- vérification automatique et manuelle des nouvelles GitHub Releases stables ;
+- proposition de téléchargement guidé vers la page officielle, sans mise à jour
+  intégrée incompatible avec la signature ad hoc actuelle.
+
 ## [1.0.1] - 2026-08-21
 
 ### Corrigé

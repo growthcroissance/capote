@@ -43,6 +43,7 @@ swiftc \
     -target arm64-apple-macosx14.0 \
     -swift-version 5 \
     -parse-as-library \
+    "$project_dir/Sources/Capote/AppUpdateCore.swift" \
     "$project_dir/Sources/Capote/SleepControlController.swift" \
     "$project_dir/Tests/ManualTestRunner.swift" \
     -o "$test_binary"
