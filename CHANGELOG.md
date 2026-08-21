@@ -10,6 +10,15 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - proposition de téléchargement guidé vers la page officielle, sans mise à jour
   intégrée incompatible avec la signature ad hoc actuelle.
 
+## [1.0.1] - 2026-08-21
+
+### Corrigé
+
+- restauration privilégiée de secours lorsqu’un helper de session ne répond
+  plus à la demande d’annulation ;
+- exclusion globale empêchant deux helpers Capote de modifier simultanément
+  `SleepDisabled`.
+
 ## [1.0.0] - 2026-08-21
 
 Première version publique de Capote.

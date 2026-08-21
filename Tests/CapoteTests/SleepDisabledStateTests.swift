@@ -84,3 +84,25 @@ struct AppUpdatePolicyTests {
         }
     }
 }
+
+struct SessionRecoveryPolicyTests {
+    @Test func restoresOnlyTheExpectedBlockedSession() {
+        let expectedURL = URL(fileURLWithPath: "/private/tmp/capote-session.cancel")
+
+        #expect(SessionRecoveryPolicy.shouldRestoreDirectly(
+            isSleepDisabled: true,
+            currentCancellationURL: expectedURL,
+            expectedCancellationURL: expectedURL
+        ))
+        #expect(!SessionRecoveryPolicy.shouldRestoreDirectly(
+            isSleepDisabled: false,
+            currentCancellationURL: expectedURL,
+            expectedCancellationURL: expectedURL
+        ))
+        #expect(!SessionRecoveryPolicy.shouldRestoreDirectly(
+            isSleepDisabled: true,
+            currentCancellationURL: URL(fileURLWithPath: "/private/tmp/other-session.cancel"),
+            expectedCancellationURL: expectedURL
+        ))
+    }
+}
