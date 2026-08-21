@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 import Testing
 @testable import Capote
 
@@ -104,5 +105,67 @@ struct SessionRecoveryPolicyTests {
             currentCancellationURL: URL(fileURLWithPath: "/private/tmp/other-session.cancel"),
             expectedCancellationURL: expectedURL
         ))
+    }
+}
+
+@MainActor
+private final class LaunchAtLoginServiceMock: LaunchAtLoginServicing {
+    var status: LaunchAtLoginStatus
+    var registerError: Error?
+    var unregisterError: Error?
+
+    init(status: LaunchAtLoginStatus) {
+        self.status = status
+    }
+
+    func register() throws {
+        if let registerError { throw registerError }
+        status = .enabled
+    }
+
+    func unregister() throws {
+        if let unregisterError { throw unregisterError }
+        status = .notRegistered
+    }
+}
+
+struct LaunchAtLoginControllerTests {
+    @Test func treatsAMissingInitialRecordAsNotRegistered() {
+        #expect(LaunchAtLoginStatusMapper.map(.notFound) == .notRegistered)
+    }
+
+    @Test @MainActor func registersAndUnregistersThroughTheInjectedService() {
+        let service = LaunchAtLoginServiceMock(status: .notRegistered)
+        let controller = LaunchAtLoginController(service: service)
+
+        controller.setRegistered(true)
+        #expect(controller.status == .enabled)
+        #expect(controller.isRegistered)
+
+        controller.setRegistered(false)
+        #expect(controller.status == .notRegistered)
+        #expect(!controller.isRegistered)
+    }
+
+    @Test @MainActor func refreshesStatusAfterAnExternalChange() {
+        let service = LaunchAtLoginServiceMock(status: .enabled)
+        let controller = LaunchAtLoginController(service: service)
+
+        service.status = .requiresApproval
+        controller.refresh()
+
+        #expect(controller.status == .requiresApproval)
+        #expect(controller.isRegistered)
+    }
+
+    @Test @MainActor func reportsRegistrationErrorsAndKeepsTheSystemStatus() {
+        let service = LaunchAtLoginServiceMock(status: .notRegistered)
+        service.registerError = NSError(domain: "CapoteTests", code: 1)
+        let controller = LaunchAtLoginController(service: service)
+
+        controller.setRegistered(true)
+
+        #expect(controller.status == .notRegistered)
+        #expect(controller.errorMessage?.contains("Impossible d’activer") == true)
     }
 }

@@ -1,6 +1,7 @@
 import Foundation
+import ServiceManagement
 
-@main
+@main @MainActor
 struct ManualTestRunner {
     static func main() {
         testEnabledState()
@@ -14,7 +15,9 @@ struct ManualTestRunner {
         testOfficialUpdateValidation()
         testUnsafeUpdateRejection()
         testSessionRecoveryPolicy()
-        print("11 tests réussis")
+        testMissingLaunchAtLoginRecord()
+        testLaunchAtLoginController()
+        print("13 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -169,10 +172,49 @@ struct ManualTestRunner {
         )
     }
 
+    private static func testLaunchAtLoginController() {
+        let service = ManualLaunchAtLoginService(status: .notRegistered)
+        let controller = LaunchAtLoginController(service: service)
+
+        controller.setRegistered(true)
+        expect(controller.status == .enabled, "activation du lancement automatique")
+
+        service.status = .requiresApproval
+        controller.refresh()
+        expect(controller.isRegistered, "actualisation d’une autorisation externe requise")
+
+        controller.setRegistered(false)
+        expect(controller.status == .notRegistered, "désactivation du lancement automatique")
+    }
+
+    private static func testMissingLaunchAtLoginRecord() {
+        expect(
+            LaunchAtLoginStatusMapper.map(.notFound) == .notRegistered,
+            "état initial sans enregistrement interprété comme désactivé"
+        )
+    }
+
     private static func expect(_ condition: @autoclosure () -> Bool, _ name: String) {
         guard condition() else {
             fputs("Échec : \(name)\n", stderr)
             exit(1)
         }
+    }
+}
+
+@MainActor
+private final class ManualLaunchAtLoginService: LaunchAtLoginServicing {
+    var status: LaunchAtLoginStatus
+
+    init(status: LaunchAtLoginStatus) {
+        self.status = status
+    }
+
+    func register() throws {
+        status = .enabled
+    }
+
+    func unregister() throws {
+        status = .notRegistered
     }
 }

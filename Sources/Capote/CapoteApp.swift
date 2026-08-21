@@ -31,10 +31,14 @@ private enum CapoteBranding {
 struct CapoteApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var controller = SleepControlController.shared
+    @StateObject private var launchAtLoginController = LaunchAtLoginController.shared
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(controller: controller)
+            MenuContent(
+                controller: controller,
+                launchAtLoginController: launchAtLoginController
+            )
         } label: {
             Label(
                 controller.isSleepDisabled == true ? "Veille désactivée" : "Veille autorisée",
@@ -57,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct MenuContent: View {
     @ObservedObject var controller: SleepControlController
+    @ObservedObject var launchAtLoginController: LaunchAtLoginController
     @ObservedObject private var updater = AppUpdater.shared
 
     private let minutePresets = Array(stride(from: 5, through: 55, by: 5))
@@ -66,6 +71,7 @@ private struct MenuContent: View {
         Text(controller.statusText)
             .onAppear {
                 controller.menuDidOpen()
+                launchAtLoginController.refresh()
             }
 
         if controller.isSleepDisabled == true {
@@ -147,6 +153,29 @@ private struct MenuContent: View {
         if let errorMessage = controller.errorMessage {
             Divider()
             Text(errorMessage)
+        }
+
+        Divider()
+
+        Toggle(
+            "Lancer Capote à l’ouverture de session",
+            isOn: Binding(
+                get: { launchAtLoginController.isRegistered },
+                set: { launchAtLoginController.setRegistered($0) }
+            )
+        )
+        .disabled(!launchAtLoginController.canChangeRegistration)
+
+        Text(launchAtLoginController.statusText)
+
+        if launchAtLoginController.status == .requiresApproval {
+            Button("Ouvrir les réglages des éléments d’ouverture…") {
+                launchAtLoginController.openSystemSettings()
+            }
+        }
+
+        if let launchAtLoginError = launchAtLoginController.errorMessage {
+            Text(launchAtLoginError)
         }
 
         Divider()

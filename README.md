@@ -18,6 +18,7 @@ lu ni conservé par l'application.
 ## Fonctionnalités
 
 - lecture de l'état système réel `SleepDisabled` ;
+- activation ou désactivation du lancement automatique à l’ouverture de session ;
 - activation après avertissement thermique et autorisation administrateur ;
 - sessions de 5 à 55 minutes et de 1 à 24 heures ;
 - session jusqu'à une date et une heure choisies ;
@@ -134,3 +135,8 @@ processus, fichier en évolution et durée indéfinie. Les chemins sont transmis
 base64 afin de ne jamais être interprétés comme des commandes shell. Le fichier
 de retour thermique est précréé par Capote puis ouvert sans suivre les liens
 symboliques et uniquement pour l'utilisateur qui a lancé la session.
+
+Le lancement à l’ouverture de session utilise l’API native
+`SMAppService.mainApp` de macOS. Son état est relu à chaque ouverture du menu ;
+si macOS exige une nouvelle approbation, Capote l’indique et propose d’ouvrir
+directement le panneau correspondant de Réglages Système.
