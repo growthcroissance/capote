@@ -8,10 +8,33 @@ private enum SessionMode {
     case download(path: String, stableSeconds: TimeInterval)
 }
 
+private enum ThermalSafetyLevel: String {
+    case serious = "thermal-serious"
+    case critical = "thermal-critical"
+
+    static var current: ThermalSafetyLevel? {
+        switch ProcessInfo.processInfo.thermalState {
+        case .serious: return .serious
+        case .critical: return .critical
+        case .nominal, .fair: return nil
+        @unknown default: return .critical
+        }
+    }
+}
+
+private enum SessionEndReason {
+    case conditionCompleted
+    case cancelled
+    case thermal(ThermalSafetyLevel)
+}
+
 private struct Options {
+    let userUID: uid_t
     let cancelPath: String
+    let resultPath: String
     let mode: SessionMode
     let dryRun: Bool
+    let simulatedThermalLevel: ThermalSafetyLevel?
 
     static func parse(_ arguments: [String]) throws -> Options {
         var values: [String: String] = [:]
@@ -35,12 +58,26 @@ private struct Options {
             index += 2
         }
 
-        let cancelPrefix = "/private/tmp/fr.benjaminfarrudja.capote-"
+        guard let rawUserUID = values["--user-uid"],
+              let userUID = uid_t(rawUserUID),
+              userUID > 0 else {
+            throw HelperError.invalidArguments
+        }
+
+        let cancelPrefix = "/private/tmp/fr.benjaminfarrudja.capote-\(userUID)-"
         guard let cancelPath = decodeBase64(values["--cancel-base64"]),
               cancelPath.hasPrefix(cancelPrefix),
               cancelPath.hasSuffix(".cancel"),
               !cancelPath.dropFirst(cancelPrefix.count).contains("/") else {
             throw HelperError.invalidCancelPath
+        }
+
+        guard let resultPath = decodeBase64(values["--result-base64"]),
+              resultPath.hasPrefix(cancelPrefix),
+              resultPath.hasSuffix(".result"),
+              !resultPath.dropFirst(cancelPrefix.count).contains("/"),
+              resultPath.dropLast(".result".count) == cancelPath.dropLast(".cancel".count) else {
+            throw HelperError.invalidResultPath
         }
 
         let mode: SessionMode
@@ -70,7 +107,26 @@ private struct Options {
             throw HelperError.invalidArguments
         }
 
-        return Options(cancelPath: cancelPath, mode: mode, dryRun: flags.contains("--dry-run"))
+        let dryRun = flags.contains("--dry-run")
+        let simulatedThermalLevel: ThermalSafetyLevel?
+
+        if let rawLevel = values["--simulate-thermal"] {
+            guard dryRun, let level = ThermalSafetyLevel(rawValue: "thermal-\(rawLevel)") else {
+                throw HelperError.invalidArguments
+            }
+            simulatedThermalLevel = level
+        } else {
+            simulatedThermalLevel = nil
+        }
+
+        return Options(
+            userUID: userUID,
+            cancelPath: cancelPath,
+            resultPath: resultPath,
+            mode: mode,
+            dryRun: dryRun,
+            simulatedThermalLevel: simulatedThermalLevel
+        )
     }
 
     private static func decodeBase64(_ value: String?) -> String? {
@@ -82,6 +138,7 @@ private struct Options {
 private enum HelperError: Error {
     case invalidArguments
     case invalidCancelPath
+    case invalidResultPath
     case administratorRequired
     case pmsetFailed(Int32)
 }
@@ -173,50 +230,89 @@ private struct CapoteSessionHelper {
         }
 
         if options.dryRun {
-            monitor(options, cancellationState: cancellationState)
+            let reason = monitor(options, cancellationState: cancellationState)
+            try recordIfNeeded(reason, atPath: options.resultPath, ownerUID: options.userUID)
             return
         }
 
         try setSleepDisabled(true)
 
         do {
-            monitor(options, cancellationState: cancellationState)
+            let reason = monitor(options, cancellationState: cancellationState)
             try setSleepDisabled(false)
+            try recordIfNeeded(reason, atPath: options.resultPath, ownerUID: options.userUID)
         } catch {
             try? setSleepDisabled(false)
             throw error
         }
     }
 
-    private static func monitor(_ options: Options, cancellationState: CancellationState) {
+    private static func monitor(_ options: Options, cancellationState: CancellationState) -> SessionEndReason {
         let startedAt = Date()
         var lastSignature: FileSignature?
         var stableSince = Date()
 
         while true {
+            let thermalLevel = options.simulatedThermalLevel ?? (options.dryRun ? nil : ThermalSafetyLevel.current)
+            if let thermalLevel {
+                return .thermal(thermalLevel)
+            }
+
             if cancellationState.isRequested() || FileManager.default.fileExists(atPath: options.cancelPath) {
-                return
+                return .cancelled
             }
 
             switch options.mode {
             case .indefinite:
                 break
             case .duration(let seconds):
-                if Date().timeIntervalSince(startedAt) >= seconds { return }
+                if Date().timeIntervalSince(startedAt) >= seconds { return .conditionCompleted }
             case .process(let pid):
-                if kill(pid, 0) != 0 && errno != EPERM { return }
+                if kill(pid, 0) != 0 && errno != EPERM { return .conditionCompleted }
             case .download(let path, let stableSeconds):
-                guard let signature = FileSignature.read(path: path) else { return }
+                guard let signature = FileSignature.read(path: path) else { return .conditionCompleted }
 
                 if signature != lastSignature {
                     lastSignature = signature
                     stableSince = Date()
                 } else if Date().timeIntervalSince(stableSince) >= stableSeconds {
-                    return
+                    return .conditionCompleted
                 }
             }
 
             Thread.sleep(forTimeInterval: 0.25)
+        }
+    }
+
+    private static func recordIfNeeded(
+        _ reason: SessionEndReason,
+        atPath path: String,
+        ownerUID: uid_t
+    ) throws {
+        guard case .thermal(let level) = reason else {
+            return
+        }
+
+        let descriptor = open(path, O_WRONLY | O_NOFOLLOW)
+        guard descriptor >= 0 else {
+            throw HelperError.invalidResultPath
+        }
+        defer { close(descriptor) }
+
+        var fileInfo = stat()
+        guard fstat(descriptor, &fileInfo) == 0,
+              fileInfo.st_mode & S_IFMT == S_IFREG,
+              fileInfo.st_uid == ownerUID,
+              ftruncate(descriptor, 0) == 0 else {
+            throw HelperError.invalidResultPath
+        }
+
+        let data = Data(level.rawValue.utf8)
+        let bytesWritten = data.withUnsafeBytes { buffer in
+            write(descriptor, buffer.baseAddress, buffer.count)
+        }
+        guard bytesWritten == data.count, fsync(descriptor) == 0 else {
+            throw HelperError.invalidResultPath
         }
     }
 
