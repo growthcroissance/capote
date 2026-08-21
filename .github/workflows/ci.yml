@@ -1,0 +1,31 @@
+name: Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: macos-14
+    steps:
+      - name: Extraire le code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Exécuter les tests
+        run: ./scripts/test.sh
+      - name: Construire l’application
+        run: ./scripts/build-app.sh
+      - name: Vérifier que la veille reste autorisée
+        run: |
+          state="$(pmset -g live)"
+          if grep -q 'SleepDisabled' <<< "$state"; then
+            grep -Eq 'SleepDisabled[[:space:]]+0' <<< "$state"
+          else
+            echo "SleepDisabled n’est pas exposé par ce runner macOS virtuel."
+          fi

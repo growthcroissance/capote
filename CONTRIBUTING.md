@@ -1,5 +1,11 @@
 # Contribuer à Capote
 
+Capote est un projet propriétaire dont le code est rendu visible pour audit.
+Les rapports de bugs et retours d’audit sont bienvenus. Les contributions de
+code externes ne sont pas acceptées tant que des conditions de contribution
+distinctes n’ont pas été définies. N’ouvrez jamais publiquement le détail d’une
+vulnérabilité non corrigée ; suivez [SECURITY.md](SECURITY.md).
+
 ## Cycle de développement
 
 1. Partir de `develop` et créer une branche `feature/<sujet>`.

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Télécharger Capote, utilitaire macOS de GROWTH Croissance, et auditer son code source.">
+  <meta name="theme-color" content="#f54d38">
+  <link rel="icon" href="assets/capote-icon.png" type="image/png">
+  <title>Capote — GROWTH Croissance</title>
+  <style>
+    :root { --coral:#f54d38; --ink:#171717; --paper:#fffaf7; --muted:#665f5b; --line:#e8dcd6; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; }
+    .wrap { width:min(1080px,calc(100% - 40px)); margin:auto; }
+    header { padding:28px 0; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+    header img { width:150px; height:auto; }
+    nav a { margin-left:20px; text-decoration:none; font-weight:650; }
+    main { padding:56px 0 80px; }
+    .hero { display:grid; grid-template-columns:1.35fr .65fr; gap:64px; align-items:center; }
+    .eyebrow { color:#b72c1d; font-size:.8rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { font-size:clamp(3rem,8vw,6.4rem); line-height:.92; letter-spacing:-.065em; margin:.18em 0 .28em; }
+    .lead { font-size:clamp(1.15rem,2vw,1.4rem); color:var(--muted); max-width:700px; }
+    .actions { display:flex; flex-wrap:wrap; gap:12px; margin:32px 0 22px; }
+    .button { display:inline-block; border:2px solid var(--ink); border-radius:999px; padding:12px 22px; text-decoration:none; font-weight:800; }
+    .button.primary { background:var(--ink); color:white; }
+    .button.support { border-color:var(--coral); color:#a82618; }
+    .icon { width:100%; max-width:320px; justify-self:end; border-radius:28%; box-shadow:0 28px 65px #7c271a28; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:.84rem; background:white; }
+    .warning { margin:58px 0 34px; padding:18px 22px; background:#fff0e9; border-left:5px solid var(--coral); }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:24px; }
+    .card { background:white; border:1px solid var(--line); border-radius:18px; padding:24px; }
+    .card h2 { margin-top:0; font-size:1.15rem; }
+    code { overflow-wrap:anywhere; background:#f4eeeb; padding:.12em .35em; border-radius:5px; }
+    footer { border-top:1px solid var(--line); padding:32px 0 48px; color:var(--muted); }
+    footer .wrap { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+    @media (max-width:760px) { .hero { grid-template-columns:1fr; gap:36px; } .icon { justify-self:start; max-width:210px; } .grid { grid-template-columns:1fr; } nav { display:none; } main { padding-top:28px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="assets/growth-croissance.png" alt="GROWTH Croissance">
+      <nav aria-label="Navigation principale">
+        <a href="https://github.com/growthcroissance/capote">Code source</a>
+        <a href="https://github.com/growthcroissance/capote/security">Sécurité</a>
+      </nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Utilitaire macOS · version 0.6.0</div>
+          <h1>Le Mac éveillé.<br>Le code visible.</h1>
+          <p class="lead">Capote empêche temporairement la veille à la fermeture du capot. Gratuit, sans compte, sans collecte de données, avec un code consultable pour audit.</p>
+          <div class="actions">
+            <a class="button primary" href="https://github.com/growthcroissance/capote/releases/latest">Télécharger Capote</a>
+            <a class="button" href="https://github.com/growthcroissance/capote">Auditer le code</a>
+            <a class="button support" href="https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE">Soutenir le projet</a>
+          </div>
+          <div class="chips" aria-label="Compatibilité et statut">
+            <span class="chip">macOS 14+</span><span class="chip">Apple Silicon + Intel</span><span class="chip">Source visible</span><span class="chip">Logiciel propriétaire</span>
+          </div>
+        </div>
+        <img class="icon" src="assets/capote-icon.png" alt="Icône ampoule de GROWTH Croissance">
+      </section>
+
+      <aside class="warning"><strong>Important :</strong> un Mac actif avec le capot fermé peut chauffer fortement. Ne l’utilisez jamais dans un sac, une housse fermée ou sans ventilation adaptée.</aside>
+
+      <section class="grid" aria-label="Transparence de la distribution">
+        <article class="card">
+          <h2>Code auditable</h2>
+          <p>Le code correspondant à chaque version est conservé sous un tag Git. Sa consultation et sa compilation locale à des fins d’audit sont autorisées par la licence propriétaire.</p>
+        </article>
+        <article class="card">
+          <h2>Archive vérifiable</h2>
+          <p>Chaque release contient l’application universelle et sa somme SHA-256. La provenance GitHub peut être vérifiée avec <code>gh attestation verify</code>.</p>
+        </article>
+        <article class="card">
+          <h2>Statut Apple transparent</h2>
+          <p>La version actuelle est signée localement, mais pas encore notariée par Apple. macOS demandera donc une confirmation au premier lancement.</p>
+        </article>
+      </section>
+    </main>
+  </div>
+  <footer><div class="wrap"><span>© 2026 GROWTH Croissance</span><span><a href="https://github.com/growthcroissance/capote/blob/main/LICENSE.md">Licence</a> · <a href="https://github.com/growthcroissance/capote/blob/main/SECURITY.md">Sécurité</a> · <a href="https://www.growth-croissance.com/">Site</a></span></div></footer>
+</body>
+</html>
