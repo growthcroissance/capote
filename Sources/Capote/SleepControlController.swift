@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UserNotifications
 
 struct RunningApplicationOption: Identifiable, Equatable {
     let pid: pid_t
@@ -14,10 +15,14 @@ enum SessionRequest: Equatable {
     case process(pid_t)
     case download(path: String, stableSeconds: TimeInterval)
 
-    func helperArguments(cancelURL: URL) -> [String] {
+    func helperArguments(cancelURL: URL, resultURL: URL) -> [String] {
         var arguments = [
+            "--user-uid",
+            String(getuid()),
             "--cancel-base64",
-            Data(cancelURL.path.utf8).base64EncodedString()
+            Data(cancelURL.path.utf8).base64EncodedString(),
+            "--result-base64",
+            Data(resultURL.path.utf8).base64EncodedString()
         ]
 
         switch self {
@@ -36,6 +41,66 @@ enum SessionRequest: Equatable {
         }
 
         return arguments
+    }
+}
+
+enum SessionTerminationReason: Equatable {
+    case thermalSerious
+    case thermalCritical
+
+    static func parse(_ data: Data?) -> SessionTerminationReason? {
+        guard let data,
+              let value = String(data: data, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) else {
+            return nil
+        }
+
+        switch value {
+        case "thermal-serious": return .thermalSerious
+        case "thermal-critical": return .thermalCritical
+        default: return nil
+        }
+    }
+
+    var userMessage: String {
+        switch self {
+        case .thermalSerious:
+            return "Capote a rétabli la veille car macOS signale une température élevée."
+        case .thermalCritical:
+            return "Capote a rétabli la veille car macOS signale une température critique."
+        }
+    }
+}
+
+private final class ThermalNotificationService: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = ThermalNotificationService()
+
+    func configure() {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    func deliver(_ reason: SessionTerminationReason) {
+        let content = UNMutableNotificationContent()
+        content.title = "Sécurité thermique Capote"
+        content.body = reason.userMessage
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "thermal-safety-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request) { _ in }
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 }
 
@@ -59,6 +124,7 @@ final class SleepControlController: ObservableObject {
         static let cancellationPath = "activeSession.cancellationPath"
         static let description = "activeSession.description"
         static let endDate = "activeSession.endDate"
+        static let resultPath = "activeSession.resultPath"
     }
 
     @Published private(set) var isSleepDisabled: Bool?
@@ -71,8 +137,10 @@ final class SleepControlController: ObservableObject {
 
     private var sessionProcess: Process?
     private var cancellationURL: URL?
+    private var resultURL: URL?
     private var pollingTimer: Timer?
     private var quitAfterSession = false
+    private var lastSessionExitStatus: Int32?
 
     var statusText: String {
         if isBusy {
@@ -104,6 +172,7 @@ final class SleepControlController: ObservableObject {
     }
 
     private init() {
+        ThermalNotificationService.shared.configure()
         loadPersistedSession()
         refresh()
         refreshRunningApplications()
@@ -150,8 +219,18 @@ final class SleepControlController: ObservableObject {
             }
 
             if !state, sessionProcess == nil {
+                let terminationReason = consumeSessionTerminationReason()
                 clearPersistedSession()
                 isBusy = false
+
+                if let terminationReason {
+                    errorMessage = terminationReason.userMessage
+                    ThermalNotificationService.shared.deliver(terminationReason)
+                } else if let lastSessionExitStatus, lastSessionExitStatus != 0 {
+                    errorMessage = "Session annulée ou refusée par macOS."
+                }
+
+                lastSessionExitStatus = nil
 
                 if quitAfterSession {
                     quitAfterSession = false
@@ -300,7 +379,14 @@ final class SleepControlController: ObservableObject {
         }
 
         let cancelURL = URL(fileURLWithPath: "/private/tmp/fr.benjaminfarrudja.capote-\(getuid())-\(UUID().uuidString).cancel")
-        let arguments = request.helperArguments(cancelURL: cancelURL)
+        let resultURL = URL(fileURLWithPath: cancelURL.path.replacingOccurrences(of: ".cancel", with: ".result"))
+
+        guard FileManager.default.createFile(atPath: resultURL.path, contents: Data()) else {
+            errorMessage = "Impossible de préparer le suivi de la session."
+            return
+        }
+
+        let arguments = request.helperArguments(cancelURL: cancelURL, resultURL: resultURL)
         let command = ([SessionCommandEscaping.shellQuote(helperURL.path)] + arguments).joined(separator: " ")
         let script = "do shell script \"\(SessionCommandEscaping.appleScriptLiteral(command))\" with administrator privileges"
 
@@ -319,18 +405,20 @@ final class SleepControlController: ObservableObject {
         do {
             try process.run()
         } catch {
+            try? FileManager.default.removeItem(at: resultURL)
             errorMessage = "Impossible de demander l’autorisation : \(error.localizedDescription)"
             return
         }
 
         sessionProcess = process
         cancellationURL = cancelURL
+        self.resultURL = resultURL
         activeSessionDescription = description
         sessionEndDate = endDate
         now = Date()
         isBusy = true
         errorMessage = nil
-        persistSession(cancelURL: cancelURL, description: description, endDate: endDate)
+        persistSession(cancelURL: cancelURL, resultURL: resultURL, description: description, endDate: endDate)
         startPolling()
     }
 
@@ -359,14 +447,9 @@ final class SleepControlController: ObservableObject {
         pollingTimer?.invalidate()
         pollingTimer = nil
         sessionProcess = nil
-
-        clearPersistedSession()
+        lastSessionExitStatus = status
         isBusy = false
         refresh()
-
-        errorMessage = status == 0 ? nil : "Session annulée ou refusée par macOS."
-        activeSessionDescription = nil
-        sessionEndDate = nil
 
         if quitAfterSession, isSleepDisabled == false {
             quitAfterSession = false
@@ -381,13 +464,18 @@ final class SleepControlController: ObservableObject {
             cancellationURL = URL(fileURLWithPath: path)
         }
 
+        if let path = defaults.string(forKey: DefaultsKey.resultPath) {
+            resultURL = URL(fileURLWithPath: path)
+        }
+
         activeSessionDescription = defaults.string(forKey: DefaultsKey.description)
         sessionEndDate = defaults.object(forKey: DefaultsKey.endDate) as? Date
     }
 
-    private func persistSession(cancelURL: URL, description: String, endDate: Date?) {
+    private func persistSession(cancelURL: URL, resultURL: URL, description: String, endDate: Date?) {
         let defaults = UserDefaults.standard
         defaults.set(cancelURL.path, forKey: DefaultsKey.cancellationPath)
+        defaults.set(resultURL.path, forKey: DefaultsKey.resultPath)
         defaults.set(description, forKey: DefaultsKey.description)
 
         if let endDate {
@@ -402,14 +490,25 @@ final class SleepControlController: ObservableObject {
             try? FileManager.default.removeItem(at: cancellationURL)
         }
 
+        if let resultURL {
+            try? FileManager.default.removeItem(at: resultURL)
+        }
+
         cancellationURL = nil
+        resultURL = nil
         activeSessionDescription = nil
         sessionEndDate = nil
 
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: DefaultsKey.cancellationPath)
+        defaults.removeObject(forKey: DefaultsKey.resultPath)
         defaults.removeObject(forKey: DefaultsKey.description)
         defaults.removeObject(forKey: DefaultsKey.endDate)
+    }
+
+    private func consumeSessionTerminationReason() -> SessionTerminationReason? {
+        guard let resultURL else { return nil }
+        return SessionTerminationReason.parse(try? Data(contentsOf: resultURL))
     }
 
     private func applySleepDisabled(_ disabled: Bool, quitAfter: Bool) {
