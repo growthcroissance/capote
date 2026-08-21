@@ -4,6 +4,13 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Corrigé
+
+- restauration privilégiée de secours lorsqu’un helper de session ne répond
+  plus à la demande d’annulation ;
+- exclusion globale empêchant deux helpers Capote de modifier simultanément
+  `SleepDisabled`.
+
 ## [1.0.0] - 2026-08-21
 
 Première version publique de Capote.

@@ -140,7 +140,61 @@ private enum HelperError: Error {
     case invalidCancelPath
     case invalidResultPath
     case administratorRequired
+    case activeSessionAlreadyRunning
+    case invalidSessionLock
     case pmsetFailed(Int32)
+}
+
+private final class SessionLock {
+    private var descriptor: Int32
+
+    private init(descriptor: Int32) {
+        self.descriptor = descriptor
+    }
+
+    static func acquire(dryRun: Bool, userUID: uid_t) throws -> SessionLock {
+        let path: String
+        let expectedOwner: uid_t
+
+        if dryRun {
+            path = "/private/tmp/fr.benjaminfarrudja.capote-\(userUID)-dry-run.lock"
+            expectedOwner = userUID
+        } else {
+            path = "/var/run/fr.benjaminfarrudja.capote.session.lock"
+            expectedOwner = 0
+        }
+
+        let descriptor = open(path, O_CREAT | O_RDWR | O_NOFOLLOW, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else {
+            throw HelperError.invalidSessionLock
+        }
+
+        var fileInfo = stat()
+        guard fstat(descriptor, &fileInfo) == 0,
+              fileInfo.st_mode & S_IFMT == S_IFREG,
+              fileInfo.st_uid == expectedOwner else {
+            close(descriptor)
+            throw HelperError.invalidSessionLock
+        }
+
+        guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else {
+            close(descriptor)
+            throw HelperError.activeSessionAlreadyRunning
+        }
+
+        return SessionLock(descriptor: descriptor)
+    }
+
+    func release() {
+        guard descriptor >= 0 else { return }
+        flock(descriptor, LOCK_UN)
+        close(descriptor)
+        descriptor = -1
+    }
+
+    deinit {
+        release()
+    }
 }
 
 private final class CancellationState {
@@ -220,6 +274,9 @@ private struct CapoteSessionHelper {
         guard options.dryRun || getuid() == 0 else {
             throw HelperError.administratorRequired
         }
+
+        let sessionLock = try SessionLock.acquire(dryRun: options.dryRun, userUID: options.userUID)
+        defer { sessionLock.release() }
 
         let cancellationState = CancellationState()
         let signalSources = installSignalHandlers(cancellationState)

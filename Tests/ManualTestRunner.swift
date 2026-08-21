@@ -10,7 +10,8 @@ struct ManualTestRunner {
         testDownloadArguments()
         testThermalTerminationReasons()
         testCommandEscaping()
-        print("7 tests réussis")
+        testSessionRecoveryPolicy()
+        print("8 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -74,6 +75,36 @@ struct ManualTestRunner {
 
         expect(shellQuoted == "'/tmp/L'\"'\"'app Capote'", "échappement shell du chemin")
         expect(appleScriptQuoted == "commande \\\"test\\\"", "échappement de la chaîne AppleScript")
+    }
+
+    private static func testSessionRecoveryPolicy() {
+        let expectedURL = URL(fileURLWithPath: "/private/tmp/capote-session.cancel")
+        let otherURL = URL(fileURLWithPath: "/private/tmp/other-session.cancel")
+
+        expect(
+            SessionRecoveryPolicy.shouldRestoreDirectly(
+                isSleepDisabled: true,
+                currentCancellationURL: expectedURL,
+                expectedCancellationURL: expectedURL
+            ),
+            "restauration de secours d’une session bloquée"
+        )
+        expect(
+            !SessionRecoveryPolicy.shouldRestoreDirectly(
+                isSleepDisabled: false,
+                currentCancellationURL: expectedURL,
+                expectedCancellationURL: expectedURL
+            ),
+            "absence de restauration si la veille est déjà rétablie"
+        )
+        expect(
+            !SessionRecoveryPolicy.shouldRestoreDirectly(
+                isSleepDisabled: true,
+                currentCancellationURL: otherURL,
+                expectedCancellationURL: expectedURL
+            ),
+            "absence de restauration pour une autre session"
+        )
     }
 
     private static func expect(_ condition: @autoclosure () -> Bool, _ name: String) {
