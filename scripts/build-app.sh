@@ -40,6 +40,7 @@ for capote_arch in arm64 x86_64; do
         "$project_dir/Sources/Capote/AppUpdateCore.swift" \
         "$project_dir/Sources/Capote/AppUpdater.swift" \
         "$project_dir/Sources/Capote/CapoteApp.swift" \
+        "$project_dir/Sources/Capote/LaunchAtLoginController.swift" \
         "$project_dir/Sources/Capote/SleepControlController.swift" \
         -o "$build_dir/Capote-$capote_arch"
 
