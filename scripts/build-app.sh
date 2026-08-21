@@ -4,7 +4,7 @@ set -euo pipefail
 
 project_dir="${0:A:h:h}"
 output_app_dir="$project_dir/dist/Capote.app"
-archive_path="$project_dir/dist/Capote-0.4.0.zip"
+archive_path="$project_dir/dist/Capote-0.5.0.zip"
 build_dir="$(mktemp -d /private/tmp/capote-build.XXXXXX)"
 app_dir="$build_dir/Capote.app"
 contents_dir="$app_dir/Contents"

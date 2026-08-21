@@ -64,7 +64,7 @@ Le bundle est créé dans `dist/Capote.app`. Il est signé localement de façon
 ad hoc pour un usage personnel. Pour l'installer, déplacez-le manuellement dans
 le dossier Applications.
 
-Une archive `dist/Capote-0.4.0.zip` est également produite et vérifiée après
+Une archive `dist/Capote-0.5.0.zip` est également produite et vérifiée après
 extraction. Elle est recommandée pour mettre à jour une copie déjà placée dans
 Applications, car certains dossiers synchronisés réappliquent des attributs
 Finder aux bundles `.app`.
