@@ -1,6 +1,32 @@
 import AppKit
 import SwiftUI
 
+private enum CapoteBranding {
+    static let websiteURL = URL(string: "https://www.growth-croissance.com/")!
+    static let donationURL = URL(
+        string: "https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE"
+    )!
+
+    static func open(_ url: URL) {
+        NSWorkspace.shared.open(url)
+    }
+
+    @MainActor
+    static func showAbout() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let alert = NSAlert()
+        alert.messageText = "Capote"
+        alert.informativeText = [
+            "Version \(version ?? "de développement")",
+            "Un utilitaire macOS proposé par GROWTH Croissance.",
+            "Gratuit, sans compte et sans collecte de données."
+        ].joined(separator: "\n")
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+}
+
 @main
 struct CapoteApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -117,6 +143,22 @@ private struct MenuContent: View {
         if let errorMessage = controller.errorMessage {
             Divider()
             Text(errorMessage)
+        }
+
+        Divider()
+
+        Text("Capote • par GROWTH Croissance")
+
+        Button("À propos de Capote…") {
+            CapoteBranding.showAbout()
+        }
+
+        Button("Découvrir GROWTH Croissance") {
+            CapoteBranding.open(CapoteBranding.websiteURL)
+        }
+
+        Button("Soutenir le projet via PayPal…") {
+            CapoteBranding.open(CapoteBranding.donationURL)
         }
 
         Divider()

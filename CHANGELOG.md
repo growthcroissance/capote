@@ -4,6 +4,25 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- licence propriétaire autorisant l’audit et la compilation locale de
+  vérification sans autoriser la redistribution ;
+- politique de signalement privé des vulnérabilités ;
+- page GitHub de téléchargement et workflows de validation, de publication et
+  d’attestation de provenance.
+
+## [0.6.0] - 2026-08-21
+
+### Ajouté
+
+- branding GROWTH Croissance dans l’application et ses métadonnées ;
+- liens vers le site GROWTH Croissance et vers un soutien PayPal facultatif ;
+- archive de partage universelle Apple Silicon/Intel avec guide d’installation
+  et somme de contrôle SHA-256 ;
+- documentation des limites de la signature ad hoc et du futur parcours de
+  notarisation Apple.
+
 ## [0.5.0] - 2026-08-21
 
 ### Ajouté
