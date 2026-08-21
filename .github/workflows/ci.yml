@@ -22,4 +22,10 @@ jobs:
       - name: Construire l’application
         run: ./scripts/build-app.sh
       - name: Vérifier que la veille reste autorisée
-        run: pmset -g live | grep -Eq 'SleepDisabled[[:space:]]+0'
+        run: |
+          state="$(pmset -g live)"
+          if grep -q 'SleepDisabled' <<< "$state"; then
+            grep -Eq 'SleepDisabled[[:space:]]+0' <<< "$state"
+          else
+            echo "SleepDisabled n’est pas exposé par ce runner macOS virtuel."
+          fi
