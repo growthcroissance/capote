@@ -73,9 +73,9 @@ En attendant son activation, les versions officielles sont disponibles dans
 les [GitHub Releases](https://github.com/growthcroissance/capote/releases). Ne
 téléchargez pas Capote depuis un miroir ou une source tierce.
 
-Chaque archive de diffusion contient l’application et un guide d’installation.
-Elle est accompagnée d’une somme de contrôle SHA-256. La procédure complète et
-les limites de la signature actuelle sont décrites dans
+Chaque artefact de diffusion contient l’application et un guide d’installation,
+et possède sa propre somme de contrôle SHA-256. La procédure complète et les
+limites de la signature actuelle sont décrites dans
 [docs/PARTAGE.md](docs/PARTAGE.md).
 
 Cette première distribution est signée localement de façon ad hoc, mais n’est
@@ -88,16 +88,16 @@ Capote vérifie aussi au lancement si une GitHub Release stable plus récente es
 disponible. La vérification envoie uniquement une requête HTTPS publique à
 GitHub, sans compte, jeton ni identifiant propre à l’utilisateur. En raison de la
 signature ad hoc, l’application ne se remplace jamais elle-même : elle demande
-confirmation avant d’ouvrir la page officielle, où l’archive et sa somme
-SHA-256 peuvent être contrôlées. Une vérification manuelle reste disponible dans
+confirmation avant d’ouvrir la page officielle, où l’artefact et sa somme
+SHA-256 peuvent être contrôlés. Une vérification manuelle reste disponible dans
 le menu.
 
-Les archives construites par GitHub Actions disposent également d’une
-attestation de provenance. Après téléchargement, vous pouvez vérifier l’archive
-avec :
+Les artefacts construits par GitHub Actions disposent également d’une
+attestation de provenance. Après téléchargement, vous pouvez vérifier l’image
+disque avec :
 
 ```sh
-gh attestation verify Capote-X.Y.Z.zip -R growthcroissance/capote
+gh attestation verify Capote-X.Y.Z.dmg -R growthcroissance/capote
 ```
 
 Capote est proposé gratuitement par
@@ -109,6 +109,7 @@ collecte de données. Si l’utilitaire vous est utile, vous pouvez
 
 ```sh
 ./scripts/build-app.sh
+./scripts/build-dmg.sh
 ```
 
 Le bundle est créé dans `dist/Capote.app`. Il est signé localement de façon
@@ -121,6 +122,12 @@ sur les Mac Apple Silicon et Intel. Le fichier voisin `.sha256` permet d’en
 contrôler l’intégrité. Cette archive est recommandée pour mettre à jour une copie
 déjà placée dans Applications, car certains dossiers synchronisés réappliquent
 des attributs Finder aux bundles `.app`.
+
+L’image disque universelle `dist/Capote-X.Y.Z.dmg` présente `Capote.app` avec un
+raccourci vers le dossier Applications pour une installation par
+glisser-déposer. Elle contient aussi le guide et la licence, et dispose de sa
+propre somme SHA-256. Le DMG facilite l’installation mais ne remplace pas la
+signature Developer ID ni la notarisation Apple.
 
 ## Implémentation et limites
 

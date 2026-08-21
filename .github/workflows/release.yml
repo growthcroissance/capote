@@ -23,24 +23,34 @@ jobs:
       - name: Exécuter les tests
         run: ./scripts/test.sh
       - name: Construire les artefacts
-        run: ./scripts/build-app.sh
+        run: |
+          ./scripts/build-app.sh
+          ./scripts/build-dmg.sh
       - name: Déterminer les artefacts
         id: artifacts
         run: |
           version="${GITHUB_REF_NAME#v}"
           echo "archive=dist/Capote-${version}.zip" >> "$GITHUB_OUTPUT"
-          echo "checksum=dist/Capote-${version}.zip.sha256" >> "$GITHUB_OUTPUT"
-      - name: Attester la provenance de l’archive
+          echo "archive_checksum=dist/Capote-${version}.zip.sha256" >> "$GITHUB_OUTPUT"
+          echo "dmg=dist/Capote-${version}.dmg" >> "$GITHUB_OUTPUT"
+          echo "dmg_checksum=dist/Capote-${version}.dmg.sha256" >> "$GITHUB_OUTPUT"
+      - name: Attester la provenance de l’archive ZIP
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: ${{ steps.artifacts.outputs.archive }}
+      - name: Attester la provenance de l’image disque
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: ${{ steps.artifacts.outputs.dmg }}
       - name: Publier la GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
+            "${{ steps.artifacts.outputs.dmg }}" \
+            "${{ steps.artifacts.outputs.dmg_checksum }}" \
             "${{ steps.artifacts.outputs.archive }}" \
-            "${{ steps.artifacts.outputs.checksum }}" \
+            "${{ steps.artifacts.outputs.archive_checksum }}" \
             --repo "${GITHUB_REPOSITORY}" \
             --title "Capote ${GITHUB_REF_NAME#v}" \
             --generate-notes \

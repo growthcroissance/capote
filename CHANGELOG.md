@@ -4,6 +4,11 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- image disque DMG vérifiée avec installation par glisser-déposer vers
+  Applications, somme SHA-256 et attestation de provenance GitHub.
+
 ## [1.2.0] - 2026-08-21
 
 ### Ajouté

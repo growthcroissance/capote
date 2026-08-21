@@ -9,9 +9,10 @@ Les conditions complètes figurent dans le fichier LICENSE.md joint.
 
 INSTALLATION
 
-1. Décompressez l’archive.
-2. Déplacez Capote.app dans le dossier Applications.
-3. Au premier lancement, faites un clic droit sur Capote puis choisissez
+1. Depuis l’image disque, faites glisser Capote.app sur le raccourci
+   Applications. Depuis l’archive ZIP, décompressez-la puis déplacez Capote.app
+   dans le dossier Applications.
+2. Au premier lancement, faites un clic droit sur Capote puis choisissez
    « Ouvrir ». Confirmez seulement si cette archive provient bien de la page de
    téléchargement officielle de GROWTH Croissance.
 
