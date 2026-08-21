@@ -8,6 +8,21 @@ enum LaunchAtLoginStatus: Equatable {
     case unavailable
 }
 
+enum LaunchAtLoginStatusMapper {
+    static func map(_ systemStatus: SMAppService.Status) -> LaunchAtLoginStatus {
+        switch systemStatus {
+        case .notRegistered, .notFound:
+            return .notRegistered
+        case .enabled:
+            return .enabled
+        case .requiresApproval:
+            return .requiresApproval
+        @unknown default:
+            return .unavailable
+        }
+    }
+}
+
 @MainActor
 protocol LaunchAtLoginServicing: AnyObject {
     var status: LaunchAtLoginStatus { get }
@@ -20,18 +35,7 @@ final class SystemLaunchAtLoginService: LaunchAtLoginServicing {
     private let service = SMAppService.mainApp
 
     var status: LaunchAtLoginStatus {
-        switch service.status {
-        case .notRegistered:
-            return .notRegistered
-        case .enabled:
-            return .enabled
-        case .requiresApproval:
-            return .requiresApproval
-        case .notFound:
-            return .unavailable
-        @unknown default:
-            return .unavailable
-        }
+        LaunchAtLoginStatusMapper.map(service.status)
     }
 
     func register() throws {

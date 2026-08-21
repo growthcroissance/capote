@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 
 @main @MainActor
 struct ManualTestRunner {
@@ -14,8 +15,9 @@ struct ManualTestRunner {
         testOfficialUpdateValidation()
         testUnsafeUpdateRejection()
         testSessionRecoveryPolicy()
+        testMissingLaunchAtLoginRecord()
         testLaunchAtLoginController()
-        print("12 tests réussis")
+        print("13 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -183,6 +185,13 @@ struct ManualTestRunner {
 
         controller.setRegistered(false)
         expect(controller.status == .notRegistered, "désactivation du lancement automatique")
+    }
+
+    private static func testMissingLaunchAtLoginRecord() {
+        expect(
+            LaunchAtLoginStatusMapper.map(.notFound) == .notRegistered,
+            "état initial sans enregistrement interprété comme désactivé"
+        )
     }
 
     private static func expect(_ condition: @autoclosure () -> Bool, _ name: String) {

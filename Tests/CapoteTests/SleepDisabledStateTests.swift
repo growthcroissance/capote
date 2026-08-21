@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 import Testing
 @testable import Capote
 
@@ -129,6 +130,10 @@ private final class LaunchAtLoginServiceMock: LaunchAtLoginServicing {
 }
 
 struct LaunchAtLoginControllerTests {
+    @Test func treatsAMissingInitialRecordAsNotRegistered() {
+        #expect(LaunchAtLoginStatusMapper.map(.notFound) == .notRegistered)
+    }
+
     @Test @MainActor func registersAndUnregistersThroughTheInjectedService() {
         let service = LaunchAtLoginServiceMock(status: .notRegistered)
         let controller = LaunchAtLoginController(service: service)
