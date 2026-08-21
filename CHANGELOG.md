@@ -2,6 +2,17 @@
 
 Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+## [0.5.0] - 2026-08-21
+
+### Ajouté
+
+- restauration automatique de la veille lorsque macOS signale un état
+  thermique sérieux ou critique ;
+- notification locale indiquant le motif de l’arrêt de sécurité ;
+- simulation thermique en mode d’essai à blanc du helper privilégié.
+
 ## [0.4.0] - 2026-08-20
 
 Première version suivie dans Git à partir de l’utilitaire personnel existant.
