@@ -116,6 +116,18 @@ enum SessionCommandEscaping {
     }
 }
 
+enum SessionRecoveryPolicy {
+    static let fallbackDelay: TimeInterval = 5
+
+    static func shouldRestoreDirectly(
+        isSleepDisabled: Bool?,
+        currentCancellationURL: URL?,
+        expectedCancellationURL: URL
+    ) -> Bool {
+        isSleepDisabled == true && currentCancellationURL == expectedCancellationURL
+    }
+}
+
 @MainActor
 final class SleepControlController: ObservableObject {
     static let shared = SleepControlController()
@@ -139,6 +151,7 @@ final class SleepControlController: ObservableObject {
     private var cancellationURL: URL?
     private var resultURL: URL?
     private var pollingTimer: Timer?
+    private var recoveryWorkItem: DispatchWorkItem?
     private var quitAfterSession = false
     private var lastSessionExitStatus: Int32?
 
@@ -216,6 +229,18 @@ final class SleepControlController: ObservableObject {
 
             if state, sessionProcess != nil {
                 isBusy = false
+            }
+
+            if state,
+               sessionProcess == nil,
+               let lastSessionExitStatus,
+               lastSessionExitStatus != 0 {
+                clearPersistedSession()
+                isBusy = false
+                quitAfterSession = false
+                self.lastSessionExitStatus = nil
+                errorMessage = "La session n’a pas pu démarrer. Une autre session Capote est peut-être déjà active."
+                return
             }
 
             if !state, sessionProcess == nil {
@@ -356,8 +381,10 @@ final class SleepControlController: ObservableObject {
                 try Data().write(to: cancellationURL, options: .atomic)
                 errorMessage = nil
                 startPolling()
+                scheduleFallbackRestoration(for: cancellationURL, quitAfter: quitAfter)
             } catch {
                 isBusy = false
+                quitAfterSession = false
                 errorMessage = "Impossible d’arrêter la session : \(error.localizedDescription)"
             }
             return
@@ -443,6 +470,33 @@ final class SleepControlController: ObservableObject {
         }
     }
 
+    private func scheduleFallbackRestoration(for cancellationURL: URL, quitAfter: Bool) {
+        recoveryWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.recoveryWorkItem = nil
+
+            guard SessionRecoveryPolicy.shouldRestoreDirectly(
+                isSleepDisabled: self.isSleepDisabled,
+                currentCancellationURL: self.cancellationURL,
+                expectedCancellationURL: cancellationURL
+            ) else {
+                return
+            }
+
+            self.clearPersistedSession()
+            self.isBusy = false
+            self.applySleepDisabled(false, quitAfter: quitAfter)
+        }
+
+        recoveryWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + SessionRecoveryPolicy.fallbackDelay,
+            execute: workItem
+        )
+    }
+
     private func sessionDidEnd(status: Int32) {
         pollingTimer?.invalidate()
         pollingTimer = nil
@@ -486,6 +540,9 @@ final class SleepControlController: ObservableObject {
     }
 
     private func clearPersistedSession() {
+        recoveryWorkItem?.cancel()
+        recoveryWorkItem = nil
+
         if let cancellationURL {
             try? FileManager.default.removeItem(at: cancellationURL)
         }

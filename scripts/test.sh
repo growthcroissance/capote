@@ -10,9 +10,17 @@ test_uid="$(id -u)"
 test_token="test-$$"
 cancel_path="/private/tmp/fr.benjaminfarrudja.capote-$test_uid-$test_token.cancel"
 result_path="/private/tmp/fr.benjaminfarrudja.capote-$test_uid-$test_token.result"
+second_cancel_path="/private/tmp/fr.benjaminfarrudja.capote-$test_uid-$test_token-second.cancel"
+second_result_path="/private/tmp/fr.benjaminfarrudja.capote-$test_uid-$test_token-second.result"
+lock_test_pid=""
 
 cleanup() {
+    if [[ -n "$lock_test_pid" ]]; then
+        kill -TERM "$lock_test_pid" 2>/dev/null || true
+        wait "$lock_test_pid" 2>/dev/null || true
+    fi
     rm -f "$cancel_path" "$result_path"
+    rm -f "$second_cancel_path" "$second_result_path"
 }
 
 trap cleanup EXIT
@@ -69,3 +77,49 @@ if [[ "$(<"$result_path")" != "thermal-serious" ]]; then
 fi
 
 print "Helper de session testé en mode thermique simulé"
+
+: > "$result_path"
+: > "$second_result_path"
+second_cancel_base64="$(printf %s "$second_cancel_path" | base64)"
+second_result_base64="$(printf %s "$second_result_path" | base64)"
+
+"$helper_binary" \
+    --user-uid "$test_uid" \
+    --cancel-base64 "$cancel_base64" \
+    --result-base64 "$result_base64" \
+    --mode duration \
+    --seconds 30 \
+    --dry-run &
+lock_test_pid=$!
+sleep 1
+
+if "$helper_binary" \
+    --user-uid "$test_uid" \
+    --cancel-base64 "$second_cancel_base64" \
+    --result-base64 "$second_result_base64" \
+    --mode duration \
+    --seconds 1 \
+    --dry-run; then
+    print -u2 "Échec : deux helpers ont acquis le verrou de session"
+    exit 1
+fi
+
+kill -TERM "$lock_test_pid"
+wait "$lock_test_pid"
+lock_test_pid=""
+
+"$helper_binary" \
+    --user-uid "$test_uid" \
+    --cancel-base64 "$second_cancel_base64" \
+    --result-base64 "$second_result_base64" \
+    --mode duration \
+    --seconds 5 \
+    --simulate-thermal critical \
+    --dry-run
+
+if [[ "$(<"$second_result_path")" != "thermal-critical" ]]; then
+    print -u2 "Échec : le verrou de session n’a pas été libéré"
+    exit 1
+fi
+
+print "Exclusion des sessions simultanées testée en mode sec"
