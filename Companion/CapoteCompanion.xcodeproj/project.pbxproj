@@ -14,6 +14,7 @@
 		A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* RemoteControlProtocol.swift */; };
 		A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* RemoteControlCrypto.swift */; };
 		A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* RemoteFrameCodec.swift */; };
+		A10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		A20000000000000000000007 /* RemoteFrameCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteFrameCodec.swift; path = ../Sources/CapoteRemoteCore/RemoteFrameCodec.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000009 /* CapoteCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapoteCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000000000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +58,7 @@
 				A20000000000000000000003 /* CompanionModel.swift */,
 				A20000000000000000000004 /* CompanionKeyStore.swift */,
 				A20000000000000000000008 /* Info.plist */,
+				A2000000000000000000000A /* Assets.xcassets */,
 			);
 			path = CapoteCompanion;
 			sourceTree = "<group>";
@@ -136,6 +139,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,6 +198,7 @@
 		A70000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -210,6 +215,7 @@
 		A70000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
