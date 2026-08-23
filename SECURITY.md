@@ -25,8 +25,8 @@ différence entre le code tagué et l’archive distribuée sont prioritaires.
 
 Sont également prioritaires les contournements du jumelage iPhone, la réutilisation
 d’une commande expirée, l’usurpation d’un appareil révoqué, l’exposition d’une clé
-du Trousseau ou l’acceptation par le daemon root d’un client XPC non signé par
-l’équipe attendue.
+du Trousseau ou toute possibilité de déclencher à distance une nouvelle session
+ou une commande administrateur, fonctionnalités volontairement absentes.
 
 Les rapports de sécurité sont les bienvenus. La consultation et l’audit du code
 restent soumis à la [licence propriétaire d’audit](LICENSE.md).

@@ -215,21 +215,7 @@ private struct MenuContent: View {
                 }
             }
 
-            Text(remoteControlController.privilegedStatusText)
-
-            if remoteControlController.canRegisterPrivilegedService {
-                Button("Installer le helper privilégié…") {
-                    remoteControlController.registerPrivilegedService()
-                }
-            } else if remoteControlController.privilegedStatus == .requiresApproval {
-                Button("Ouvrir les réglages d’approbation…") {
-                    remoteControlController.openPrivilegedApprovalSettings()
-                }
-            } else if remoteControlController.privilegedStatus == .enabled {
-                Button("Retirer le helper privilégié…", role: .destructive) {
-                    remoteControlController.unregisterPrivilegedService()
-                }
-            }
+            Text("Depuis l’iPhone : consulter l’état et arrêter une session Capote active.")
         }
 
         Divider()

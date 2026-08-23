@@ -38,8 +38,8 @@ Les artefacts générés se trouvent dans `dist/` et ne sont pas versionnés.
 - Ne pas ajouter de mécanisme de conservation du mot de passe administrateur.
 - Ne jamais ouvrir le contrôle réseau par défaut ni accepter une commande non
   chiffrée, expirée, rejouée ou provenant d’un appareil révoqué.
-- Ne pas enregistrer le daemon privilégié avec une signature ad hoc : son client
-  XPC doit être authentifié par bundle identifier et Team ID stables.
+- Sans identité Developer ID stable, limiter le compagnon à la lecture d’état et
+  à l’arrêt d’une session Capote existante ; ne pas exposer de démarrage distant.
 
 ## Organisation du code
 

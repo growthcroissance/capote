@@ -165,7 +165,7 @@ final class CompanionModel: ObservableObject {
         }
     }
 
-    func send(_ action: RemoteCommandAction, durationSeconds: Int? = nil) {
+    func send(_ action: RemoteCommandAction) {
         guard !isConnecting,
               let mac = selectedMac,
               let endpoint = endpoint(for: mac.id),
@@ -177,7 +177,7 @@ final class CompanionModel: ObservableObject {
         isConnecting = true
         message = nil
         do {
-            let command = RemoteCommand(action: action, durationSeconds: durationSeconds)
+            let command = RemoteCommand(action: action)
             let encrypted = EncryptedRemotePayload(
                 deviceIdentifier: deviceIdentifier(),
                 sealedPayload: try RemoteControlCrypto.seal(command, using: key)

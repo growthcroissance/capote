@@ -4,13 +4,11 @@ public enum CapoteRemoteProtocol {
     public static let version = 1
     public static let bonjourType = "_capote._tcp"
     public static let maximumFrameSize = 64 * 1_024
-    public static let maximumSessionDuration: TimeInterval = 4 * 3_600
     public static let commandLifetime: TimeInterval = 30
 }
 
 public enum RemoteCommandAction: String, Codable, CaseIterable, Sendable {
     case status
-    case startDuration
     case restoreSleep
 }
 
@@ -20,21 +18,18 @@ public struct RemoteCommand: Codable, Equatable, Sendable {
     public let issuedAt: Date
     public let expiresAt: Date
     public let action: RemoteCommandAction
-    public let durationSeconds: Int?
 
     public init(
         identifier: UUID = UUID(),
         issuedAt: Date = Date(),
         lifetime: TimeInterval = CapoteRemoteProtocol.commandLifetime,
-        action: RemoteCommandAction,
-        durationSeconds: Int? = nil
+        action: RemoteCommandAction
     ) {
         self.protocolVersion = CapoteRemoteProtocol.version
         self.identifier = identifier
         self.issuedAt = issuedAt
         self.expiresAt = issuedAt.addingTimeInterval(lifetime)
         self.action = action
-        self.durationSeconds = durationSeconds
     }
 }
 
@@ -43,8 +38,6 @@ public enum RemoteCommandValidationError: Error, Equatable, LocalizedError {
     case expired
     case issuedInFuture
     case replayed
-    case invalidDuration
-    case unexpectedDuration
 
     public var errorDescription: String? {
         switch self {
@@ -52,8 +45,6 @@ public enum RemoteCommandValidationError: Error, Equatable, LocalizedError {
         case .expired: return "Commande distante expirée."
         case .issuedInFuture: return "Horloge de l’appareil distant incohérente."
         case .replayed: return "Commande distante déjà traitée."
-        case .invalidDuration: return "Durée de session distante invalide."
-        case .unexpectedDuration: return "Cette commande ne doit pas contenir de durée."
         }
     }
 }
@@ -89,39 +80,26 @@ public final class RemoteCommandValidator: @unchecked Sendable {
             throw RemoteCommandValidationError.replayed
         }
 
-        switch command.action {
-        case .startDuration:
-            guard let duration = command.durationSeconds,
-                  duration >= 60,
-                  TimeInterval(duration) <= CapoteRemoteProtocol.maximumSessionDuration else {
-                throw RemoteCommandValidationError.invalidDuration
-            }
-        case .status, .restoreSleep:
-            guard command.durationSeconds == nil else {
-                throw RemoteCommandValidationError.unexpectedDuration
-            }
-        }
-
         acceptedIdentifiers[command.identifier] = command.expiresAt
     }
 }
 
 public struct RemoteMacStatus: Codable, Equatable, Sendable {
     public let isSleepDisabled: Bool?
-    public let isRemoteControlReady: Bool
+    public let canRestoreActiveSession: Bool
     public let activeSessionDescription: String?
     public let sessionEndDate: Date?
     public let thermalSafetyTriggered: Bool
 
     public init(
         isSleepDisabled: Bool?,
-        isRemoteControlReady: Bool,
+        canRestoreActiveSession: Bool,
         activeSessionDescription: String?,
         sessionEndDate: Date?,
         thermalSafetyTriggered: Bool = false
     ) {
         self.isSleepDisabled = isSleepDisabled
-        self.isRemoteControlReady = isRemoteControlReady
+        self.canRestoreActiveSession = canRestoreActiveSession
         self.activeSessionDescription = activeSessionDescription
         self.sessionEndDate = sessionEndDate
         self.thermalSafetyTriggered = thermalSafetyTriggered

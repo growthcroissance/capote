@@ -27,8 +27,6 @@ fi
 
 mkdir -p "$contents_dir/MacOS"
 mkdir -p "$contents_dir/Helpers"
-mkdir -p "$contents_dir/Library/LaunchDaemons"
-mkdir -p "$contents_dir/Library/LaunchServices"
 mkdir -p "$project_dir/.build/clang-module-cache"
 
 for capote_arch in arm64 x86_64; do
@@ -42,13 +40,11 @@ for capote_arch in arm64 x86_64; do
         "$project_dir/Sources/CapoteRemoteCore/RemoteControlProtocol.swift" \
         "$project_dir/Sources/CapoteRemoteCore/RemoteControlCrypto.swift" \
         "$project_dir/Sources/CapoteRemoteCore/RemoteFrameCodec.swift" \
-        "$project_dir/Sources/CapoteRemoteCore/PrivilegedRemoteProtocol.swift" \
         "$project_dir/Sources/Capote/AppUpdateCore.swift" \
         "$project_dir/Sources/Capote/AppUpdater.swift" \
         "$project_dir/Sources/Capote/CapoteApp.swift" \
         "$project_dir/Sources/Capote/LaunchAtLoginController.swift" \
         "$project_dir/Sources/Capote/MacRemoteAgent.swift" \
-        "$project_dir/Sources/Capote/PrivilegedRemoteClient.swift" \
         "$project_dir/Sources/Capote/RemoteControlController.swift" \
         "$project_dir/Sources/Capote/RemoteDeviceKeyStore.swift" \
         "$project_dir/Sources/Capote/SleepControlController.swift" \
@@ -64,19 +60,6 @@ for capote_arch in arm64 x86_64; do
         "$project_dir/Sources/CapoteSessionHelper/main.swift" \
         -o "$build_dir/CapoteSession-$capote_arch"
 
-    swiftc \
-        -sdk "$capote_sdk" \
-        -module-cache-path "$project_dir/.build/clang-module-cache" \
-        -target "$capote_arch-apple-macosx14.0" \
-        -swift-version 5 \
-        -parse-as-library \
-        -O \
-        "$project_dir/Sources/CapoteRemoteCore/RemoteControlProtocol.swift" \
-        "$project_dir/Sources/CapoteRemoteCore/RemoteControlCrypto.swift" \
-        "$project_dir/Sources/CapoteRemoteCore/RemoteFrameCodec.swift" \
-        "$project_dir/Sources/CapoteRemoteCore/PrivilegedRemoteProtocol.swift" \
-        "$project_dir/Sources/CapoteRemoteDaemon/main.swift" \
-        -o "$build_dir/CapoteRemoteDaemon-$capote_arch"
 done
 
 lipo -create "$build_dir/Capote-arm64" "$build_dir/Capote-x86_64" -output "$contents_dir/MacOS/Capote"
@@ -85,24 +68,11 @@ lipo \
     "$build_dir/CapoteSession-arm64" \
     "$build_dir/CapoteSession-x86_64" \
     -output "$contents_dir/Helpers/CapoteSession"
-lipo \
-    -create \
-    "$build_dir/CapoteRemoteDaemon-arm64" \
-    "$build_dir/CapoteRemoteDaemon-x86_64" \
-    -output "$contents_dir/Library/LaunchServices/CapoteRemoteDaemon"
 
 cp "$project_dir/packaging/Info.plist" "$contents_dir/Info.plist"
-cp \
-    "$project_dir/packaging/fr.benjaminfarrudja.capote.remote-daemon.plist" \
-    "$contents_dir/Library/LaunchDaemons/fr.benjaminfarrudja.capote.remote-daemon.plist"
 
 xattr -cr "$app_dir"
 codesign --force --sign - "$contents_dir/Helpers/CapoteSession"
-codesign \
-    --force \
-    --sign - \
-    --identifier fr.benjaminfarrudja.capote.remote-daemon \
-    "$contents_dir/Library/LaunchServices/CapoteRemoteDaemon"
 xattr -cr "$app_dir"
 codesign --force --sign - "$app_dir"
 xattr -cr "$app_dir"

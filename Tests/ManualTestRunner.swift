@@ -239,9 +239,14 @@ struct ManualTestRunner {
     }
 
     private static func testRemoteCommandValidation() {
+        expect(
+            RemoteCommandAction.allCases.map(\.rawValue) == ["status", "restoreSleep"],
+            "protocole distant limité à l’état et à l’arrêt"
+        )
+
         let now = Date()
         let validator = RemoteCommandValidator()
-        let command = RemoteCommand(issuedAt: now, action: .startDuration, durationSeconds: 600)
+        let command = RemoteCommand(issuedAt: now, action: .status)
 
         do {
             try validator.validate(command, now: now)
@@ -254,17 +259,6 @@ struct ManualTestRunner {
                 expect(false, "rejeu distant rejeté")
             }
 
-            do {
-                try RemoteCommandValidator().validate(
-                    RemoteCommand(issuedAt: now, action: .startDuration, durationSeconds: 14_401),
-                    now: now
-                )
-                expect(false, "durée distante limitée")
-            } catch RemoteCommandValidationError.invalidDuration {
-                expect(true, "durée distante limitée")
-            } catch {
-                expect(false, "durée distante limitée")
-            }
         } catch {
             expect(false, "validation d’une commande distante")
         }
@@ -294,8 +288,7 @@ struct ManualTestRunner {
             )
             expect(
                 decodedCommand.identifier == command.identifier
-                    && decodedCommand.action == command.action
-                    && decodedCommand.durationSeconds == command.durationSeconds,
+                    && decodedCommand.action == command.action,
                 "trame distante chiffrée"
             )
         } catch {

@@ -4,8 +4,6 @@ struct CompanionContentView: View {
     @ObservedObject var model: CompanionModel
     @State private var pairingTarget: DiscoveredMac?
     @State private var pairingCode = ""
-    @State private var requestedDuration = 900
-    @State private var confirmsThermalRisk = false
 
     var body: some View {
         NavigationStack {
@@ -27,29 +25,20 @@ struct CompanionContentView: View {
                             model.send(.status)
                         }
 
-                        if model.status?.isSleepDisabled == true {
+                        if model.status?.isSleepDisabled == true,
+                           model.status?.canRestoreActiveSession == true {
                             Button("Rétablir la veille", role: .destructive) {
                                 model.send(.restoreSleep)
                             }
-                        } else {
-                            Picker("Durée", selection: $requestedDuration) {
-                                Text("15 min").tag(900)
-                                Text("30 min").tag(1_800)
-                                Text("1 h").tag(3_600)
-                                Text("2 h").tag(7_200)
-                                Text("4 h").tag(14_400)
-                            }
-
-                            Toggle("Le Mac est correctement ventilé", isOn: $confirmsThermalRisk)
-
-                            Button("Démarrer la session") {
-                                model.send(.startDuration, durationSeconds: requestedDuration)
-                            }
-                            .disabled(!confirmsThermalRisk || model.status?.isRemoteControlReady != true)
                         }
 
-                        if model.status?.isRemoteControlReady == false {
-                            Text("Le helper privilégié signé doit être approuvé sur le Mac avant tout démarrage distant.")
+                        if model.status?.isSleepDisabled == true,
+                           model.status?.canRestoreActiveSession == false {
+                            Text("La veille est désactivée, mais cette session ne peut pas être arrêtée à distance.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else if model.status?.isSleepDisabled == false {
+                            Text("Démarrez la session depuis le Mac. Sans programme Apple Developer, l’iPhone ne peut pas lancer une commande administrateur.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }

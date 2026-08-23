@@ -61,7 +61,7 @@ final class RemoteControlCoreTests: XCTestCase {
 
     func testEncryptedCommandAndFrameRoundTrip() throws {
         let key = try RemoteControlCrypto.randomData(count: 32)
-        let command = RemoteCommand(action: .startDuration, durationSeconds: 900)
+        let command = RemoteCommand(action: .status)
         let encrypted = EncryptedRemotePayload(
             deviceIdentifier: UUID(),
             sealedPayload: try RemoteControlCrypto.seal(command, using: key)
@@ -84,25 +84,21 @@ final class RemoteControlCoreTests: XCTestCase {
 
         XCTAssertEqual(decodedCommand.identifier, command.identifier)
         XCTAssertEqual(decodedCommand.action, command.action)
-        XCTAssertEqual(decodedCommand.durationSeconds, command.durationSeconds)
     }
 
-    func testValidatorRejectsReplayAndUnsafeDuration() throws {
+    func testValidatorRejectsReplay() throws {
+        XCTAssertEqual(
+            RemoteCommandAction.allCases.map(\.rawValue),
+            ["status", "restoreSleep"]
+        )
+
         let now = Date()
         let validator = RemoteCommandValidator()
-        let command = RemoteCommand(issuedAt: now, action: .startDuration, durationSeconds: 600)
+        let command = RemoteCommand(issuedAt: now, action: .status)
 
         XCTAssertNoThrow(try validator.validate(command, now: now))
         XCTAssertThrowsError(try validator.validate(command, now: now)) { error in
             XCTAssertEqual(error as? RemoteCommandValidationError, .replayed)
-        }
-        XCTAssertThrowsError(
-            try RemoteCommandValidator().validate(
-                RemoteCommand(issuedAt: now, action: .startDuration, durationSeconds: 14_401),
-                now: now
-            )
-        ) { error in
-            XCTAssertEqual(error as? RemoteCommandValidationError, .invalidDuration)
         }
     }
 

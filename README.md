@@ -33,8 +33,8 @@ lu ni conservé par l'application.
   GitHub Release, sans remplacement automatique de l’application.
 - compagnon iOS optionnel sur le même réseau local, avec découverte Bonjour,
   jumelage à usage unique et commandes chiffrées propres à chaque appareil ;
-- révocation locale des iPhone jumelés et limite de quatre heures pour une
-  session démarrée à distance.
+- consultation de l’état du Mac, arrêt d’une session Capote déjà active et
+  révocation locale des iPhone jumelés.
 
 Les sessions limitées continuent même si Capote est quittée et rétablissent la
 veille lorsque leur condition prend fin. Une session sans limite reste active
@@ -154,13 +154,12 @@ distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Les
 commandes ont une validité de 30 secondes, sont protégées contre le rejeu et
 sont chiffrées avec ChaCha20-Poly1305.
 
-Le daemon root embarqué refuse tout client qui ne possède pas le bundle
-identifier et le Team ID attendus. Avec la signature ad hoc actuelle, il ne peut
-donc pas être enregistré et le démarrage distant reste indisponible. La lecture
-de l’état et l’arrêt d’une session Capote déjà active restent utilisables sur le
-réseau local. Une signature Developer ID stable, une approbation explicite dans
-Réglages Système et une validation physique seront requises avant d’activer le
-démarrage distant.
+Avec la signature ad hoc actuelle, aucun daemon root n’est embarqué ou installé.
+Le compagnon peut lire l’état et arrêter une session démarrée par Capote, car
+l’arrêt passe par le fichier d’annulation déjà surveillé par le helper de cette
+session. Il ne peut pas démarrer une session ni modifier directement `pmset`.
+Cette limitation est volontaire et évite d’exposer une commande privilégiée que
+le Mac ne pourrait pas authentifier solidement.
 
 Le compagnon n’utilise aucun relais Internet, compte Capote ou télémétrie. Un
 Mac déjà endormi n’est pas réveillé par ce protocole.

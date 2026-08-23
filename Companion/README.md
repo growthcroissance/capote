@@ -16,12 +16,11 @@ Ouvrir `CapoteCompanion.xcodeproj`, choisir l’iPhone et exécuter le scheme
 `CapoteCompanion`. Une Personal Team suffit pour un essai personnel, avec les
 limites de reprovisionnement imposées par Apple.
 
-## Limite de sécurité actuelle
+## Périmètre sans adhésion payante
 
 Le prototype sait lire l’état du Mac et demander l’arrêt d’une session Capote
-déjà active. Le démarrage distant reste fermé tant qu’un daemon privilégié
-installé via `SMAppService` n’est pas signé avec une identité stable et approuvé
-dans Réglages Système. Cette restriction est volontaire : une signature ad hoc
-ne permet pas au daemon root d’authentifier solidement son client XPC.
+déjà active. Il ne contient aucun daemon root et ne permet pas de démarrer une
+session depuis l’iPhone. L’activation initiale et son autorisation administrateur
+restent donc effectuées sur le Mac ; l’iPhone sert ensuite au suivi et à l’arrêt.
 
 Aucun relais Internet, compte Capote, serveur distant ou télémétrie n’est ajouté.

@@ -14,7 +14,6 @@
 		A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* RemoteControlProtocol.swift */; };
 		A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* RemoteControlCrypto.swift */; };
 		A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* RemoteFrameCodec.swift */; };
-		A10000000000000000000008 /* PrivilegedRemoteProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +26,6 @@
 		A20000000000000000000007 /* RemoteFrameCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteFrameCodec.swift; path = ../Sources/CapoteRemoteCore/RemoteFrameCodec.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000009 /* CapoteCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapoteCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PrivilegedRemoteProtocol.swift; path = ../Sources/CapoteRemoteCore/PrivilegedRemoteProtocol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,7 +66,6 @@
 				A20000000000000000000005 /* RemoteControlProtocol.swift */,
 				A20000000000000000000006 /* RemoteControlCrypto.swift */,
 				A20000000000000000000007 /* RemoteFrameCodec.swift */,
-				A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */,
 			);
 			name = Shared;
 			sourceTree = "<group>";
@@ -156,7 +153,6 @@
 				A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */,
 				A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */,
 				A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */,
-				A10000000000000000000008 /* PrivilegedRemoteProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 #if SWIFT_PACKAGE
 import CapoteRemoteCore
@@ -12,7 +11,6 @@ final class RemoteControlController: ObservableObject {
     @Published private(set) var pairingCode: String?
     @Published private(set) var statusText = "Contrôle iPhone désactivé"
     @Published private(set) var pairedDevices: [PairedRemoteDevice] = []
-    @Published private(set) var privilegedStatus = PrivilegedRemoteClient.shared.status
 
     private enum DefaultsKey {
         static let serviceIdentifier = "remoteControl.serviceIdentifier"
@@ -23,26 +21,6 @@ final class RemoteControlController: ObservableObject {
 
     private init() {
         pairedDevices = keyStore.devices()
-    }
-
-    var canRegisterPrivilegedService: Bool {
-        PrivilegedRemoteClient.shared.hasStableSignature
-            && privilegedStatus == .notRegistered
-    }
-
-    var privilegedStatusText: String {
-        switch privilegedStatus {
-        case .unavailableSignature:
-            return "Le démarrage distant nécessite une signature Developer ID stable."
-        case .notRegistered:
-            return "Helper privilégié non installé."
-        case .requiresApproval:
-            return "Helper à approuver dans Réglages Système."
-        case .enabled:
-            return "Helper privilégié prêt."
-        case .unknown:
-            return "État du helper privilégié inconnu."
-        }
     }
 
     func setEnabled(_ enabled: Bool) {
@@ -72,43 +50,6 @@ final class RemoteControlController: ObservableObject {
         keyStore.remove(deviceIdentifier: device.id)
         pairedDevices = keyStore.devices()
         statusText = "\(device.name) a été révoqué."
-    }
-
-    func refreshPrivilegedStatus() {
-        privilegedStatus = PrivilegedRemoteClient.shared.status
-    }
-
-    func registerPrivilegedService() {
-        do {
-            try PrivilegedRemoteClient.shared.register()
-            refreshPrivilegedStatus()
-        } catch {
-            statusText = "Impossible d’enregistrer le helper privilégié."
-        }
-    }
-
-    func openPrivilegedApprovalSettings() {
-        PrivilegedRemoteClient.shared.openApprovalSettings()
-    }
-
-    func unregisterPrivilegedService() {
-        let client = PrivilegedRemoteClient.shared
-        client.perform(PrivilegedRemoteRequest(action: .restoreSleep)) { [weak self] result in
-            Task { @MainActor in
-                guard let self else { return }
-                guard case .success(let response) = result, response.accepted else {
-                    self.statusText = "Le helper n’a pas confirmé la restauration de la veille ; retrait annulé."
-                    return
-                }
-                do {
-                    try client.unregister()
-                    self.refreshPrivilegedStatus()
-                    self.statusText = "Helper privilégié retiré après restauration de la veille."
-                } catch {
-                    self.statusText = "Impossible de retirer le helper privilégié."
-                }
-            }
-        }
     }
 
     private func start() {
@@ -164,54 +105,6 @@ final class RemoteControlController: ObservableObject {
         completion: @escaping @Sendable (RemoteExecutionResult) -> Void
     ) {
         let sleepController = SleepControlController.shared
-        let privilegedClient = PrivilegedRemoteClient.shared
-
-        if privilegedClient.status == .enabled {
-            let action: PrivilegedRemoteAction
-            switch command.action {
-            case .status: action = .status
-            case .startDuration: action = .startDuration
-            case .restoreSleep: action = .restoreSleep
-            }
-            privilegedClient.perform(
-                PrivilegedRemoteRequest(
-                    identifier: command.identifier,
-                    action: action,
-                    durationSeconds: command.durationSeconds
-                )
-            ) { result in
-                Task { @MainActor in
-                    switch result {
-                    case .success(let response):
-                        sleepController.refresh()
-                        completion(
-                            RemoteExecutionResult(
-                                accepted: response.accepted,
-                                message: response.message,
-                                status: RemoteMacStatus(
-                                    isSleepDisabled: response.isSleepDisabled,
-                                    isRemoteControlReady: true,
-                                    activeSessionDescription: response.sessionEndDate == nil
-                                        ? sleepController.activeSessionDescription
-                                        : "Session démarrée depuis l’iPhone",
-                                    sessionEndDate: response.sessionEndDate,
-                                    thermalSafetyTriggered: response.thermalSafetyTriggered
-                                )
-                            )
-                        )
-                    case .failure:
-                        completion(
-                            RemoteExecutionResult(
-                                accepted: false,
-                                message: "Le helper privilégié n’a pas répondu.",
-                                status: currentStatus(remoteReady: false)
-                            )
-                        )
-                    }
-                }
-            }
-            return
-        }
 
         switch command.action {
         case .status:
@@ -219,7 +112,7 @@ final class RemoteControlController: ObservableObject {
             completion(RemoteExecutionResult(
                 accepted: true,
                 message: "État du Mac actualisé.",
-                status: currentStatus(remoteReady: false)
+                status: currentStatus()
             ))
         case .restoreSleep:
             if sleepController.hasCancellableSession {
@@ -227,29 +120,23 @@ final class RemoteControlController: ObservableObject {
                 completion(RemoteExecutionResult(
                     accepted: true,
                     message: "Restauration de la veille demandée.",
-                    status: currentStatus(remoteReady: false)
+                    status: currentStatus()
                 ))
                 return
             }
             completion(RemoteExecutionResult(
                 accepted: false,
-                message: "Le helper privilégié permanent n’est pas encore approuvé sur ce Mac.",
-                status: currentStatus(remoteReady: false)
-            ))
-        case .startDuration:
-            completion(RemoteExecutionResult(
-                accepted: false,
-                message: "Activez d’abord le helper privilégié signé sur le Mac.",
-                status: currentStatus(remoteReady: false)
+                message: "Aucune session Capote contrôlable n’est active sur ce Mac.",
+                status: currentStatus()
             ))
         }
     }
 
-    private static func currentStatus(remoteReady: Bool) -> RemoteMacStatus {
+    private static func currentStatus() -> RemoteMacStatus {
         let controller = SleepControlController.shared
         return RemoteMacStatus(
             isSleepDisabled: controller.isSleepDisabled,
-            isRemoteControlReady: remoteReady,
+            canRestoreActiveSession: controller.hasCancellableSession,
             activeSessionDescription: controller.activeSessionDescription,
             sessionEndDate: controller.sessionEndDate
         )

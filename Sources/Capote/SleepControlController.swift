@@ -394,21 +394,6 @@ final class SleepControlController: ObservableObject {
             return
         }
 
-        if PrivilegedRemoteClient.shared.status == .enabled {
-            isBusy = true
-            PrivilegedRemoteClient.shared.perform(
-                PrivilegedRemoteRequest(action: .restoreSleep)
-            ) { [weak self] _ in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.isBusy = false
-                    self.refresh()
-                    if quitAfter { NSApp.terminate(nil) }
-                }
-            }
-            return
-        }
-
         applySleepDisabled(false, quitAfter: quitAfter)
     }
 
