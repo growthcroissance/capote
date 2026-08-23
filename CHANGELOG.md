@@ -4,6 +4,15 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.4.0] - 2026-08-23
+
+### Modifié
+
+- nouvelle identité visuelle B1 « Équilibre », déclinée pour l’icône macOS,
+  le bundle de l’application et le site de téléchargement ;
+- construction déterministe de `Capote.icns` à partir des dix représentations
+  macOS standard, de 16 à 1024 pixels.
+
 ## [1.3.0] - 2026-08-23
 
 ### Ajouté
