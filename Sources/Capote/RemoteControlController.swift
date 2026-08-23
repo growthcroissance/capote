@@ -62,13 +62,9 @@ final class RemoteControlController: ObservableObject {
                     Self.execute(command, completion: completion)
                 }
             },
-            eventHandler: { [weak self] event in
+            eventHandler: { event in
                 Task { @MainActor in
-                    self?.statusText = event
-                    self?.pairedDevices = self?.keyStore.devices() ?? []
-                    if event.contains("jumelé") {
-                        self?.pairingCode = nil
-                    }
+                    Self.shared.handle(event)
                 }
             }
         )
@@ -88,6 +84,14 @@ final class RemoteControlController: ObservableObject {
         pairingCode = nil
         isEnabled = false
         statusText = "Contrôle iPhone désactivé"
+    }
+
+    private func handle(_ event: String) {
+        statusText = event
+        pairedDevices = keyStore.devices()
+        if event.contains("jumelé") {
+            pairingCode = nil
+        }
     }
 
     private func serviceIdentifier() -> UUID {
