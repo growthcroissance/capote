@@ -67,10 +67,10 @@ Les vulnérabilités doivent être signalées en privé selon [SECURITY.md](SECU
 
 ## Télécharger et partager
 
-La page officielle de téléchargement sera publiée à l’adresse
+La page officielle de téléchargement est publiée à l’adresse
 [growthcroissance.github.io/capote](https://growthcroissance.github.io/capote/).
-En attendant son activation, les versions officielles sont disponibles dans
-les [GitHub Releases](https://github.com/growthcroissance/capote/releases). Ne
+Les versions officielles restent distribuées par les
+[GitHub Releases](https://github.com/growthcroissance/capote/releases). Ne
 téléchargez pas Capote depuis un miroir ou une source tierce.
 
 Chaque artefact de diffusion contient l’application et un guide d’installation,
@@ -83,6 +83,19 @@ pas encore notariée par Apple. Au premier lancement, macOS peut donc demander d
 faire un clic droit sur l’application puis de choisir « Ouvrir ». Une signature
 Developer ID et une notarisation seront nécessaires pour une diffusion sans cet
 avertissement.
+
+Capote étant un projet personnel gratuit encore diffusé à petite échelle,
+l’adhésion annuelle au programme Apple Developer n’a pas été souscrite à ce
+stade. Comme l’application agit sur un réglage système et sollicite une
+autorisation administrateur, son code est rendu entièrement consultable afin de
+permettre un audit indépendant. Cette transparence ne remplace pas la signature
+Developer ID ni la notarisation ; elle permet de comprendre précisément le
+fonctionnement et les limites de la version distribuée aujourd’hui.
+
+Un compagnon iOS de Capote est par ailleurs en cours de développement. Sa
+future distribution nécessitera l’adhésion à l’Apple Developer Program. Les
+dons facultatifs au projet contribueront notamment à financer cet abonnement
+annuel.
 
 Capote vérifie aussi au lancement si une GitHub Release stable plus récente est
 disponible. La vérification envoie uniquement une requête HTTPS publique à
@@ -103,12 +116,15 @@ gh attestation verify Capote-X.Y.Z.dmg -R growthcroissance/capote
 Capote est proposé gratuitement par
 [GROWTH Croissance](https://www.growth-croissance.com/), sans compte et sans
 collecte de données. Si l’utilitaire vous est utile, vous pouvez
-[soutenir facultativement le projet via PayPal](https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE).
+[soutenir facultativement le projet via PayPal](https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE),
+notamment pour aider à financer l’adhésion Apple Developer nécessaire à la
+future distribution du compagnon iOS en cours de développement.
 
 ## Construire l'application
 
 ```sh
 ./scripts/build-app.sh
+./scripts/prepare-packaging-tools.sh
 ./scripts/build-dmg.sh
 ```
 
@@ -125,9 +141,10 @@ des attributs Finder aux bundles `.app`.
 
 L’image disque universelle `dist/Capote-X.Y.Z.dmg` présente `Capote.app` avec un
 raccourci vers le dossier Applications pour une installation par
-glisser-déposer. Elle contient aussi le guide et la licence, et dispose de sa
-propre somme SHA-256. Le DMG facilite l’installation mais ne remplace pas la
-signature Developer ID ni la notarisation Apple.
+glisser-déposer dans une fenêtre Finder aux couleurs de GROWTH Croissance. Le
+dossier Documentation contient le guide et la licence. Le DMG dispose de sa
+propre somme SHA-256, mais ne remplace pas la signature Developer ID ni la
+notarisation Apple.
 
 ## Implémentation et limites
 

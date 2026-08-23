@@ -21,6 +21,8 @@ jobs:
         run: ./scripts/test.sh
       - name: Construire l’application
         run: ./scripts/build-app.sh
+      - name: Préparer les outils de packaging
+        run: ./scripts/prepare-packaging-tools.sh
       - name: Construire l’image disque
         run: ./scripts/build-dmg.sh
       - name: Vérifier que la veille reste autorisée

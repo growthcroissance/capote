@@ -1,0 +1,38 @@
+--- a/dmgbuild/core.py
++++ b/dmgbuild/core.py
+@@ -15,7 +15,7 @@
+     from importlib import resources
+ 
+ from ds_store import DSStore
+-from mac_alias import Alias, Bookmark
++from mac_alias import Alias
+ 
+ from . import colors, licensing
+ 
+@@ -562,8 +562,6 @@
+ 
+         if icon or badge_icon:
+             subprocess.call(["/usr/bin/SetFile", "-a", "C", mount_point])
+-
+-        background_bmk = None
+ 
+         callback(
+             {
+@@ -645,8 +643,6 @@
+                     raise ValueError('background file "%s" not found' % background)
+ 
+             alias = Alias.for_file(path_in_image)
+-            background_bmk = Bookmark.for_file(path_in_image)
+-
+             icvp["backgroundType"] = 2
+             icvp["backgroundImageAlias"] = alias.to_bytes()
+ 
+@@ -782,8 +778,6 @@
+             d["."]["bwsp"] = bwsp
+             if include_icon_view_settings:
+                 d["."]["icvp"] = icvp
+-                if background_bmk:
+-                    d["."]["pBBk"] = background_bmk
+             if include_list_view_settings:
+                 d["."]["lsvp"] = lsvp
+             d["."]["icvl"] = icvl

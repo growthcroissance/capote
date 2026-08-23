@@ -22,6 +22,8 @@ jobs:
           test "${GITHUB_REF_NAME}" = "v${version}"
       - name: Exécuter les tests
         run: ./scripts/test.sh
+      - name: Préparer les outils de packaging
+        run: ./scripts/prepare-packaging-tools.sh
       - name: Construire les artefacts
         run: |
           ./scripts/build-app.sh

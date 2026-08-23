@@ -25,8 +25,16 @@ les Mac Apple Silicon et Intel, avec leurs sommes de contrôle SHA-256 :
 
 ```sh
 ./scripts/build-app.sh
+./scripts/prepare-packaging-tools.sh
 ./scripts/build-dmg.sh
 ```
+
+Le script de préparation installe dans `.build/dmg-venv` la version publiée
+`dmgbuild 1.6.5`, épinglée par empreinte SHA-256 avec ses dépendances. Il lui
+applique le correctif minimal repris de la révision officielle
+`42ff59afb50907c6305cdbc658d34e6fe3a81828` pour le fond d’image sous macOS 26.
+Les métadonnées Finder sont ainsi construites directement, sans piloter Finder
+par AppleScript.
 
 Joindre ensemble les quatre fichiers générés dans `dist/` à la GitHub Release :
 
@@ -35,10 +43,11 @@ Joindre ensemble les quatre fichiers générés dans `dist/` à la GitHub Releas
 - `Capote-X.Y.Z.zip` ;
 - `Capote-X.Y.Z.zip.sha256`.
 
-Le DMG et le ZIP contiennent également `LICENSE.md`, afin que les droits
-d’usage et d’audit accompagnent toujours le binaire. Le DMG est le parcours
-d’installation recommandé ; le ZIP reste utile pour remplacer une installation
-existante ou comme solution de repli.
+Le DMG contient un dossier Documentation réunissant `LICENSE.md` et le guide
+d’installation ; le ZIP les contient à sa racine. Les droits d’usage et d’audit
+accompagnent ainsi toujours le binaire. Le DMG est le parcours d’installation
+recommandé ; le ZIP reste utile pour remplacer une installation existante ou
+comme solution de repli.
 
 Publier également la somme SHA-256 dans le texte de l’annonce ou de la release,
 afin qu’elle ne soit pas uniquement fournie à côté de l’archive qu’elle doit
@@ -50,6 +59,13 @@ Le bundle est signé localement de façon ad hoc. Il n’est pas signé avec un
 certificat Apple Developer ID et n’est pas notarié. Au premier lancement, un
 destinataire doit donc faire un clic droit sur l’application, choisir
 « Ouvrir », puis confirmer l’ouverture.
+
+Capote est un projet personnel gratuit encore diffusé à petite échelle. Le coût
+récurrent du programme Apple Developer n’a donc pas été engagé à ce stade.
+Puisque l’application agit sur un réglage système et demande une autorisation
+administrateur, le code correspondant aux versions distribuées reste
+entièrement consultable pour audit. Ne pas présenter cette transparence comme un
+substitut à la signature Developer ID ou à la notarisation Apple.
 
 Ne pas présenter ces artefacts comme « signés et notariés ». Pour supprimer cet
 avertissement, il faudra :
@@ -79,11 +95,12 @@ manuellement `Capote.app`.
 
 ## Checklist avant partage
 
-- exécuter `./scripts/test.sh`, `./scripts/build-app.sh` puis
-  `./scripts/build-dmg.sh` ;
+- exécuter `./scripts/test.sh`, `./scripts/build-app.sh`,
+  `./scripts/prepare-packaging-tools.sh` puis `./scripts/build-dmg.sh` ;
 - vérifier que `pmset -g live` indique toujours `SleepDisabled 0` ;
 - vérifier les deux architectures avec `lipo -info` ;
-- monter le DMG, vérifier le raccourci Applications et tester le glisser-déposer ;
+- monter le DMG, vérifier le fond, le positionnement des icônes, le raccourci
+  Applications et le glisser-déposer ;
 - tester le ZIP extrait sur un autre compte macOS ou un autre Mac ;
 - rappeler clairement l’avertissement thermique ;
 - publier le DMG, le ZIP, leurs sommes SHA-256 et les notes de version ;
@@ -98,3 +115,7 @@ Le lien intégré utilise la page de don PayPal hébergée créée pour Capote :
 être ponctuels ou annuels. Si cette page est remplacée dans PayPal,
 mettre également à jour l’URL centralisée dans
 `CapoteBranding.donationURL`, le README et le guide inclus dans l’archive.
+
+Un compagnon iOS de Capote est en cours de développement. Sa future
+distribution nécessitera une adhésion à l’Apple Developer Program. Les dons
+facultatifs contribueront notamment à financer cet abonnement annuel.

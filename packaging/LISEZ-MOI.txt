@@ -20,6 +20,15 @@ Cette première distribution est signée localement mais n’est pas encore
 notariée par Apple. macOS peut donc afficher un avertissement indiquant que le
 développeur ne peut pas être vérifié.
 
+Capote étant un projet personnel gratuit à diffusion limitée, l’adhésion
+annuelle au programme Apple Developer n’a pas été souscrite à ce stade. Le code
+reste consultable afin de permettre un audit indépendant de son fonctionnement.
+Cette possibilité d’audit ne remplace pas la notarisation Apple.
+
+Un compagnon iOS de Capote est en cours de développement. Sa future
+distribution nécessitera une adhésion à l’Apple Developer Program. Les dons
+facultatifs au projet contribueront notamment à financer cet abonnement annuel.
+
 SÉCURITÉ
 
 Un Mac actif et fermé doit toujours rester correctement ventilé. Ne l’utilisez
@@ -30,6 +39,7 @@ LIENS
 
 Site : https://www.growth-croissance.com/
 Code source et versions officielles : https://github.com/growthcroissance/capote
-Soutien facultatif : https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE
+Soutien facultatif au projet et au futur compagnon iOS :
+https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE
 
 Merci d’utiliser Capote.
