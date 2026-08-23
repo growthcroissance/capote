@@ -8,6 +8,8 @@
     <string>Capote</string>
     <key>CFBundleIdentifier</key>
     <string>fr.benjaminfarrudja.capote</string>
+    <key>CFBundleIconFile</key>
+    <string>Capote.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -17,9 +19,9 @@
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 GROWTH Croissance</string>
     <key>CFBundleShortVersionString</key>
-	<string>1.2.0</string>
+	<string>1.4.0</string>
 	<key>CFBundleVersion</key>
-	<string>10</string>
+	<string>11</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>

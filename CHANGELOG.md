@@ -14,6 +14,25 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - exclusion explicite du démarrage distant et de tout daemon root tant que
   Capote reste distribuée avec une signature ad hoc.
 
+## [1.4.0] - 2026-08-23
+
+### Modifié
+
+- nouvelle identité visuelle B1 « Équilibre », déclinée pour l’icône macOS,
+  le bundle de l’application et le site de téléchargement ;
+- construction déterministe de `Capote.icns` à partir des dix représentations
+  macOS standard, de 16 à 1024 pixels.
+
+## [1.3.0] - 2026-08-23
+
+### Ajouté
+
+- image disque DMG vérifiée avec fenêtre Finder aux couleurs de GROWTH
+  Croissance, installation par glisser-déposer vers Applications, somme SHA-256
+  et attestation de provenance GitHub ;
+- construction reproductible du DMG avec une révision épinglée de `dmgbuild`,
+  sans automatisation Finder, compatible avec le fond d’image sous macOS 26.
+
 ## [1.2.0] - 2026-08-21
 
 ### Ajouté
