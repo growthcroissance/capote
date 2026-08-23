@@ -7,6 +7,7 @@ output_app_dir="$project_dir/dist/Capote.app"
 build_dir="$(mktemp -d /private/tmp/capote-build.XXXXXX)"
 app_dir="$build_dir/Capote.app"
 contents_dir="$app_dir/Contents"
+resources_dir="$contents_dir/Resources"
 fallback_sdk="/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk"
 version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$project_dir/packaging/Info.plist")"
 archive_name="Capote-$version"
@@ -27,6 +28,7 @@ fi
 
 mkdir -p "$contents_dir/MacOS"
 mkdir -p "$contents_dir/Helpers"
+mkdir -p "$resources_dir"
 mkdir -p "$project_dir/.build/clang-module-cache"
 
 for capote_arch in arm64 x86_64; do
@@ -63,6 +65,7 @@ lipo \
     -output "$contents_dir/Helpers/CapoteSession"
 
 cp "$project_dir/packaging/Info.plist" "$contents_dir/Info.plist"
+"$project_dir/scripts/build-icon.py" --output "$resources_dir/Capote.icns"
 
 xattr -cr "$app_dir"
 codesign --force --sign - "$contents_dir/Helpers/CapoteSession"
