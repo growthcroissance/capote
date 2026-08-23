@@ -8,6 +8,8 @@
     <string>Capote</string>
     <key>CFBundleIdentifier</key>
     <string>fr.benjaminfarrudja.capote</string>
+    <key>CFBundleIconFile</key>
+    <string>Capote.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
