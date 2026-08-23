@@ -4,6 +4,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.3.0] - 2026-08-23
+
 ### Ajouté
 
 - image disque DMG vérifiée avec fenêtre Finder aux couleurs de GROWTH
