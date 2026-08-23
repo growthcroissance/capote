@@ -16,7 +16,7 @@ INSTALLATION
    « Ouvrir ». Confirmez seulement si cette archive provient bien de la page de
    téléchargement officielle de GROWTH Croissance.
 
-Cette première distribution est signée localement mais n’est pas encore
+Cette distribution est signée localement mais n’est pas encore
 notariée par Apple. macOS peut donc afficher un avertissement indiquant que le
 développeur ne peut pas être vérifié.
 

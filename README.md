@@ -78,7 +78,7 @@ et possède sa propre somme de contrôle SHA-256. La procédure complète et les
 limites de la signature actuelle sont décrites dans
 [docs/PARTAGE.md](docs/PARTAGE.md).
 
-Cette première distribution est signée localement de façon ad hoc, mais n’est
+Cette distribution est signée localement de façon ad hoc, mais n’est
 pas encore notariée par Apple. Au premier lancement, macOS peut donc demander de
 faire un clic droit sur l’application puis de choisir « Ouvrir ». Une signature
 Developer ID et une notarisation seront nécessaires pour une diffusion sans cet

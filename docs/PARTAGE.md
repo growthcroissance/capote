@@ -53,7 +53,7 @@ Publier également la somme SHA-256 dans le texte de l’annonce ou de la releas
 afin qu’elle ne soit pas uniquement fournie à côté de l’archive qu’elle doit
 authentifier.
 
-## Limite de cette première distribution
+## Limite de cette distribution
 
 Le bundle est signé localement de façon ad hoc. Il n’est pas signé avec un
 certificat Apple Developer ID et n’est pas notarié. Au premier lancement, un
