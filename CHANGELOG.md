@@ -4,6 +4,16 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- prototype de compagnon iOS limité au réseau local avec découverte Bonjour ;
+- jumelage à code unique de 96 bits, clés par appareil dans le Trousseau,
+  chiffrement ChaCha20-Poly1305 et protection anti-rejeu ;
+- agent macOS désactivé par défaut, révocation des iPhone et commandes distantes
+  limitées à quatre heures ;
+- daemon privilégié `SMAppService` à sécurité thermique, dont l’enregistrement
+  reste fermé tant que Capote ne possède pas une identité de signature stable.
+
 ## [1.2.0] - 2026-08-21
 
 ### Ajouté

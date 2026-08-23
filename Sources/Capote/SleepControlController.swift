@@ -155,6 +155,10 @@ final class SleepControlController: ObservableObject {
     private var quitAfterSession = false
     private var lastSessionExitStatus: Int32?
 
+    var hasCancellableSession: Bool {
+        cancellationURL != nil
+    }
+
     var statusText: String {
         if isBusy {
             return "Autorisation ou modification en cours…"
@@ -386,6 +390,21 @@ final class SleepControlController: ObservableObject {
                 isBusy = false
                 quitAfterSession = false
                 errorMessage = "Impossible d’arrêter la session : \(error.localizedDescription)"
+            }
+            return
+        }
+
+        if PrivilegedRemoteClient.shared.status == .enabled {
+            isBusy = true
+            PrivilegedRemoteClient.shared.perform(
+                PrivilegedRemoteRequest(action: .restoreSleep)
+            ) { [weak self] _ in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.isBusy = false
+                    self.refresh()
+                    if quitAfter { NSApp.terminate(nil) }
+                }
             }
             return
         }

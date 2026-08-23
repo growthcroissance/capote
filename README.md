@@ -31,6 +31,10 @@ lu ni conservé par l'application.
 - action « rétablir la veille et quitter ».
 - vérification des nouvelles versions officielles avec ouverture guidée de la
   GitHub Release, sans remplacement automatique de l’application.
+- compagnon iOS optionnel sur le même réseau local, avec découverte Bonjour,
+  jumelage à usage unique et commandes chiffrées propres à chaque appareil ;
+- révocation locale des iPhone jumelés et limite de quatre heures pour une
+  session démarrée à distance.
 
 Les sessions limitées continuent même si Capote est quittée et rétablissent la
 veille lorsque leur condition prend fin. Une session sans limite reste active
@@ -140,3 +144,23 @@ Le lancement à l’ouverture de session utilise l’API native
 `SMAppService.mainApp` de macOS. Son état est relu à chaque ouverture du menu ;
 si macOS exige une nouvelle approbation, Capote l’indique et propose d’ouvrir
 directement le panneau correspondant de Réglages Système.
+
+### Compagnon iOS local
+
+Le prototype iOS se trouve dans `Companion/CapoteCompanion.xcodeproj`. Capote
+n’écoute le réseau local qu’après activation explicite de l’option dans son
+menu. Le jumelage utilise un code aléatoire de 96 bits à usage unique ; une clé
+distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Les
+commandes ont une validité de 30 secondes, sont protégées contre le rejeu et
+sont chiffrées avec ChaCha20-Poly1305.
+
+Le daemon root embarqué refuse tout client qui ne possède pas le bundle
+identifier et le Team ID attendus. Avec la signature ad hoc actuelle, il ne peut
+donc pas être enregistré et le démarrage distant reste indisponible. La lecture
+de l’état et l’arrêt d’une session Capote déjà active restent utilisables sur le
+réseau local. Une signature Developer ID stable, une approbation explicite dans
+Réglages Système et une validation physique seront requises avant d’activer le
+démarrage distant.
+
+Le compagnon n’utilise aucun relais Internet, compte Capote ou télémétrie. Un
+Mac déjà endormi n’est pas réveillé par ce protocole.

@@ -1,0 +1,27 @@
+# Capote pour iPhone — prototype local
+
+Le compagnon découvre Capote avec Bonjour sur le même réseau local. Le jumelage
+utilise un code aléatoire de 96 bits affiché une seule fois par le Mac. Une clé
+distincte est ensuite conservée dans le Trousseau de chaque appareil ; les
+commandes et réponses sont chiffrées avec ChaCha20-Poly1305.
+
+## Prérequis
+
+- Xcode complet avec le SDK iOS 17 ou ultérieur ;
+- un iPhone réel pour valider l’autorisation de réseau local ;
+- une équipe de signature sélectionnée dans Xcode pour le target
+  `CapoteCompanion`.
+
+Ouvrir `CapoteCompanion.xcodeproj`, choisir l’iPhone et exécuter le scheme
+`CapoteCompanion`. Une Personal Team suffit pour un essai personnel, avec les
+limites de reprovisionnement imposées par Apple.
+
+## Limite de sécurité actuelle
+
+Le prototype sait lire l’état du Mac et demander l’arrêt d’une session Capote
+déjà active. Le démarrage distant reste fermé tant qu’un daemon privilégié
+installé via `SMAppService` n’est pas signé avec une identité stable et approuvé
+dans Réglages Système. Cette restriction est volontaire : une signature ad hoc
+ne permet pas au daemon root d’authentifier solidement son client XPC.
+
+Aucun relais Internet, compte Capote, serveur distant ou télémétrie n’est ajouté.

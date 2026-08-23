@@ -32,12 +32,14 @@ struct CapoteApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var controller = SleepControlController.shared
     @StateObject private var launchAtLoginController = LaunchAtLoginController.shared
+    @StateObject private var remoteControlController = RemoteControlController.shared
 
     var body: some Scene {
         MenuBarExtra {
             MenuContent(
                 controller: controller,
-                launchAtLoginController: launchAtLoginController
+                launchAtLoginController: launchAtLoginController,
+                remoteControlController: remoteControlController
             )
         } label: {
             Label(
@@ -62,6 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private struct MenuContent: View {
     @ObservedObject var controller: SleepControlController
     @ObservedObject var launchAtLoginController: LaunchAtLoginController
+    @ObservedObject var remoteControlController: RemoteControlController
     @ObservedObject private var updater = AppUpdater.shared
 
     private let minutePresets = Array(stride(from: 5, through: 55, by: 5))
@@ -176,6 +179,57 @@ private struct MenuContent: View {
 
         if let launchAtLoginError = launchAtLoginController.errorMessage {
             Text(launchAtLoginError)
+        }
+
+        Divider()
+
+        Toggle(
+            "Autoriser le contrôle depuis un iPhone",
+            isOn: Binding(
+                get: { remoteControlController.isEnabled },
+                set: { remoteControlController.setEnabled($0) }
+            )
+        )
+
+        Text(remoteControlController.statusText)
+
+        if remoteControlController.isEnabled {
+            if let pairingCode = remoteControlController.pairingCode {
+                Text(pairingCode)
+                Button("Annuler le jumelage") {
+                    remoteControlController.cancelPairing()
+                }
+            } else {
+                Button("Jumeler un iPhone…") {
+                    remoteControlController.startPairing()
+                }
+            }
+
+            if !remoteControlController.pairedDevices.isEmpty {
+                Menu("iPhone jumelés") {
+                    ForEach(remoteControlController.pairedDevices) { device in
+                        Button("Révoquer \(device.name)") {
+                            remoteControlController.remove(device)
+                        }
+                    }
+                }
+            }
+
+            Text(remoteControlController.privilegedStatusText)
+
+            if remoteControlController.canRegisterPrivilegedService {
+                Button("Installer le helper privilégié…") {
+                    remoteControlController.registerPrivilegedService()
+                }
+            } else if remoteControlController.privilegedStatus == .requiresApproval {
+                Button("Ouvrir les réglages d’approbation…") {
+                    remoteControlController.openPrivilegedApprovalSettings()
+                }
+            } else if remoteControlController.privilegedStatus == .enabled {
+                Button("Retirer le helper privilégié…", role: .destructive) {
+                    remoteControlController.unregisterPrivilegedService()
+                }
+            }
         }
 
         Divider()

@@ -1,0 +1,254 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* CapoteCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CapoteCompanionApp.swift */; };
+		A10000000000000000000002 /* CompanionContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* CompanionContentView.swift */; };
+		A10000000000000000000003 /* CompanionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* CompanionModel.swift */; };
+		A10000000000000000000004 /* CompanionKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* CompanionKeyStore.swift */; };
+		A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* RemoteControlProtocol.swift */; };
+		A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* RemoteControlCrypto.swift */; };
+		A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* RemoteFrameCodec.swift */; };
+		A10000000000000000000008 /* PrivilegedRemoteProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* CapoteCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapoteCompanionApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* CompanionContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* CompanionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* CompanionKeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionKeyStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* RemoteControlProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteControlProtocol.swift; path = ../Sources/CapoteRemoteCore/RemoteControlProtocol.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* RemoteControlCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteControlCrypto.swift; path = ../Sources/CapoteRemoteCore/RemoteControlCrypto.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* RemoteFrameCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteFrameCodec.swift; path = ../Sources/CapoteRemoteCore/RemoteFrameCodec.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000009 /* CapoteCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapoteCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PrivilegedRemoteProtocol.swift; path = ../Sources/CapoteRemoteCore/PrivilegedRemoteProtocol.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000002 /* CapoteCompanion */,
+				A40000000000000000000003 /* Shared */,
+				A40000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* CapoteCompanion */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* CapoteCompanionApp.swift */,
+				A20000000000000000000002 /* CompanionContentView.swift */,
+				A20000000000000000000003 /* CompanionModel.swift */,
+				A20000000000000000000004 /* CompanionKeyStore.swift */,
+				A20000000000000000000008 /* Info.plist */,
+			);
+			path = CapoteCompanion;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000003 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000005 /* RemoteControlProtocol.swift */,
+				A20000000000000000000006 /* RemoteControlCrypto.swift */,
+				A20000000000000000000007 /* RemoteFrameCodec.swift */,
+				A20000000000000000000010 /* PrivilegedRemoteProtocol.swift */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000009 /* CapoteCompanion.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* CapoteCompanion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000000000000000000002 /* Build configuration list for PBXNativeTarget "CapoteCompanion" */;
+			buildPhases = (
+				A30000000000000000000002 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+				A30000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CapoteCompanion;
+			productName = CapoteCompanion;
+			productReference = A20000000000000000000009 /* CapoteCompanion.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A50000000000000000000002 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A60000000000000000000001 /* Build configuration list for PBXProject "CapoteCompanion" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = fr;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				fr,
+				Base,
+			);
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* CapoteCompanion */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A30000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* CapoteCompanionApp.swift in Sources */,
+				A10000000000000000000002 /* CompanionContentView.swift in Sources */,
+				A10000000000000000000003 /* CompanionModel.swift in Sources */,
+				A10000000000000000000004 /* CompanionKeyStore.swift in Sources */,
+				A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */,
+				A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */,
+				A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */,
+				A10000000000000000000008 /* PrivilegedRemoteProtocol.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A70000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A70000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A70000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CapoteCompanion/Info.plist;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fr.benjaminfarrudja.capote.companion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A70000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CapoteCompanion/Info.plist;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fr.benjaminfarrudja.capote.companion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000000000000000000001 /* Build configuration list for PBXProject "CapoteCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000000000000000000001 /* Debug */,
+				A70000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000000000000000000002 /* Build configuration list for PBXNativeTarget "CapoteCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000000000000000000003 /* Debug */,
+				A70000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A50000000000000000000002 /* Project object */;
+}

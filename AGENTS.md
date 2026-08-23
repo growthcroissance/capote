@@ -10,7 +10,9 @@ comportement normal à la fin de la session.
 
 - macOS 14 ou ultérieur ;
 - Swift Package Manager et outils de développement Apple ;
-- application de barre des menus, sans service distant ni secret ;
+- application de barre des menus et compagnon iOS local, sans relais Internet ;
+- clés de jumelage propres à chaque appareil, conservées uniquement dans le
+  Trousseau local ;
 - installation personnelle manuelle dans `/Applications`.
 
 ## Commandes de validation
@@ -34,6 +36,10 @@ Les artefacts générés se trouvent dans `dist/` et ne sont pas versionnés.
 - Ne jamais contourner l’avertissement thermique : un Mac actif et fermé doit
   rester correctement ventilé.
 - Ne pas ajouter de mécanisme de conservation du mot de passe administrateur.
+- Ne jamais ouvrir le contrôle réseau par défaut ni accepter une commande non
+  chiffrée, expirée, rejouée ou provenant d’un appareil révoqué.
+- Ne pas enregistrer le daemon privilégié avec une signature ad hoc : son client
+  XPC doit être authentifié par bundle identifier et Team ID stables.
 
 ## Organisation du code
 
