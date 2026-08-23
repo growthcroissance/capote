@@ -4,6 +4,14 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- image disque DMG vérifiée avec fenêtre Finder aux couleurs de GROWTH
+  Croissance, installation par glisser-déposer vers Applications, somme SHA-256
+  et attestation de provenance GitHub ;
+- construction reproductible du DMG avec une révision épinglée de `dmgbuild`,
+  sans automatisation Finder, compatible avec le fond d’image sous macOS 26.
+
 ## [1.2.0] - 2026-08-21
 
 ### Ajouté

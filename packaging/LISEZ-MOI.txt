@@ -9,15 +9,25 @@ Les conditions complètes figurent dans le fichier LICENSE.md joint.
 
 INSTALLATION
 
-1. Décompressez l’archive.
-2. Déplacez Capote.app dans le dossier Applications.
-3. Au premier lancement, faites un clic droit sur Capote puis choisissez
+1. Depuis l’image disque, faites glisser Capote.app sur le raccourci
+   Applications. Depuis l’archive ZIP, décompressez-la puis déplacez Capote.app
+   dans le dossier Applications.
+2. Au premier lancement, faites un clic droit sur Capote puis choisissez
    « Ouvrir ». Confirmez seulement si cette archive provient bien de la page de
    téléchargement officielle de GROWTH Croissance.
 
 Cette première distribution est signée localement mais n’est pas encore
 notariée par Apple. macOS peut donc afficher un avertissement indiquant que le
 développeur ne peut pas être vérifié.
+
+Capote étant un projet personnel gratuit à diffusion limitée, l’adhésion
+annuelle au programme Apple Developer n’a pas été souscrite à ce stade. Le code
+reste consultable afin de permettre un audit indépendant de son fonctionnement.
+Cette possibilité d’audit ne remplace pas la notarisation Apple.
+
+Un compagnon iOS de Capote est en cours de développement. Sa future
+distribution nécessitera une adhésion à l’Apple Developer Program. Les dons
+facultatifs au projet contribueront notamment à financer cet abonnement annuel.
 
 SÉCURITÉ
 
@@ -29,6 +39,7 @@ LIENS
 
 Site : https://www.growth-croissance.com/
 Code source et versions officielles : https://github.com/growthcroissance/capote
-Soutien facultatif : https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE
+Soutien facultatif au projet et au futur compagnon iOS :
+https://www.paypal.com/donate/?hosted_button_id=568Y4MLLJSUXE
 
 Merci d’utiliser Capote.
