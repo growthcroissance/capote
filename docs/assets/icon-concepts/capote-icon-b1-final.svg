@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Capote — icône B1 Équilibre</title>
+  <desc id="desc">Un ordinateur portable fermé au centre d’un halo de veille active ouvert en haut.</desc>
+
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="#F54D38"/>
+
+  <path
+    d="M 408 190 A 340 340 0 1 0 616 190"
+    fill="none"
+    stroke="#FFFAF7"
+    stroke-width="80"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M 280 500 V 468 Q 280 430 318 430 H 706 Q 744 430 744 468 V 500 Z"
+    fill="#171717"
+  />
+  <path
+    d="M 280 516 H 444 Q 444 538 466 538 H 558 Q 580 538 580 516 H 744 V 544 Q 744 580 708 580 H 316 Q 280 580 280 544 Z"
+    fill="#171717"
+  />
+</svg>
