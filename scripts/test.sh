@@ -43,6 +43,7 @@ swiftc \
     -target arm64-apple-macosx14.0 \
     -swift-version 5 \
     -parse-as-library \
+    "$project_dir/Sources/CapoteRemoteCore/RemoteDirectAccess.swift" \
     "$project_dir/Sources/CapoteRemoteCore/RemoteControlProtocol.swift" \
     "$project_dir/Sources/CapoteRemoteCore/RemoteControlCrypto.swift" \
     "$project_dir/Sources/CapoteRemoteCore/RemoteFrameCodec.swift" \

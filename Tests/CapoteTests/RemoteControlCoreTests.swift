@@ -3,6 +3,41 @@ import XCTest
 @testable import CapoteRemoteCore
 
 final class RemoteControlCoreTests: XCTestCase {
+    func testTailscaleAddressesAreNormalizedFailClosed() {
+        XCTAssertEqual(RemoteDirectAccess.port, 51_684)
+        XCTAssertEqual(
+            RemoteDirectAccess.normalizedTailscaleHost("  MAC.PERSO.TS.NET. "),
+            "mac.perso.ts.net"
+        )
+        XCTAssertEqual(RemoteDirectAccess.normalizedTailscaleHost("100.64.0.1"), "100.64.0.1")
+        XCTAssertEqual(RemoteDirectAccess.normalizedTailscaleHost("100.127.255.254"), "100.127.255.254")
+        XCTAssertEqual(
+            RemoteDirectAccess.normalizedTailscaleHost("[fd7a:115c:a1e0::1]"),
+            "fd7a:115c:a1e0::1"
+        )
+
+        XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("mac"))
+        XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("example.com"))
+        XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("192.168.1.10"))
+        XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("100.128.0.1"))
+        XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("-mac.perso.ts.net"))
+    }
+
+    func testLocalRouteIsPreferredWhenAvailable() {
+        XCTAssertEqual(
+            RemoteDirectAccess.preferredRoutes(hasTailscaleHost: true, hasLocalEndpoint: true),
+            [.localNetwork, .tailscale]
+        )
+        XCTAssertEqual(
+            RemoteDirectAccess.preferredRoutes(hasTailscaleHost: false, hasLocalEndpoint: true),
+            [.localNetwork]
+        )
+        XCTAssertEqual(
+            RemoteDirectAccess.preferredRoutes(hasTailscaleHost: true, hasLocalEndpoint: false),
+            [.tailscale]
+        )
+    }
+
     func testPairingProofAndWrappedDeviceKeyRoundTrip() throws {
         let code = try RemoteControlCrypto.makePairingCode()
         let serviceID = UUID()

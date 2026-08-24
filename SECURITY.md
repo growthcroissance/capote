@@ -28,5 +28,11 @@ d’une commande expirée, l’usurpation d’un appareil révoqué, l’exposit
 du Trousseau ou toute possibilité de déclencher à distance une nouvelle session
 ou une commande administrateur, fonctionnalités volontairement absentes.
 
+L’accès Tailscale ne doit jamais nécessiter Funnel, Serve, une redirection de
+port ou une adresse Internet publique. Le compagnon n’accepte comme destination
+distante qu’un nom MagicDNS complet en `.ts.net` ou une adresse IP appartenant
+aux plages Tailscale ; le chiffrement et l’anti-rejeu de Capote restent appliqués
+au-dessus du tunnel privé.
+
 Les rapports de sécurité sont les bienvenus. La consultation et l’audit du code
 restent soumis à la [licence propriétaire d’audit](LICENSE.md).

@@ -16,6 +16,21 @@ struct DiscoveredMac: Identifiable, Equatable {
 struct PairedMac: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
+    var tailscaleHost: String?
+}
+
+protocol CompanionTransport {
+    var connectionLabel: String { get }
+
+    func send(
+        _ wire: RemoteWireMessage,
+        completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
+    )
+}
+
+struct CompanionTransportResponse {
+    let wire: RemoteWireMessage
+    let connectionLabel: String
 }
 
 @MainActor
@@ -26,10 +41,12 @@ final class CompanionModel: ObservableObject {
     @Published private(set) var status: RemoteMacStatus?
     @Published private(set) var message: String?
     @Published private(set) var isConnecting = false
+    @Published private(set) var successfulConnectionLabel: String?
 
     private let browserQueue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-browser")
     private let keyStore = CompanionKeyStore()
     private var browser: NWBrowser?
+    private var activeRequestIdentifier: UUID?
 
     private enum DefaultsKey {
         static let deviceIdentifier = "companion.deviceIdentifier"
@@ -40,7 +57,10 @@ final class CompanionModel: ObservableObject {
     var connectionText: String {
         if isConnecting { return "Connexion…" }
         guard let selectedMac else { return "Aucun Mac" }
-        return endpoint(for: selectedMac.id) == nil ? "Hors ligne" : "Disponible"
+        if let successfulConnectionLabel { return successfulConnectionLabel }
+        if endpoint(for: selectedMac.id) != nil { return "Réseau local disponible" }
+        if selectedMac.tailscaleHost != nil { return "Tailscale configuré" }
+        return "Hors ligne"
     }
 
     var sleepStateText: String {
@@ -78,13 +98,30 @@ final class CompanionModel: ObservableObject {
                         ?? "Mac avec Capote"
                     return DiscoveredMac(id: identifier, name: displayName, endpoint: endpoint)
                 }.sorted { $0.name < $1.name }
+                if endpoints.isEmpty, self.successfulConnectionLabel == "Réseau local" {
+                    self.successfulConnectionLabel = nil
+                }
             }
         }
         browser.stateUpdateHandler = { [weak self] state in
-            if case .failed(let error) = state {
+            switch state {
+            case .waiting(let error), .failed(let error):
                 Task { @MainActor in
+                    self?.discoveredMacs = []
+                    if self?.successfulConnectionLabel == "Réseau local" {
+                        self?.successfulConnectionLabel = nil
+                    }
                     self?.message = "Recherche locale impossible : \(error.localizedDescription)"
                 }
+            case .cancelled:
+                Task { @MainActor in
+                    self?.discoveredMacs = []
+                    if self?.successfulConnectionLabel == "Réseau local" {
+                        self?.successfulConnectionLabel = nil
+                    }
+                }
+            default:
+                break
             }
         }
         self.browser = browser
@@ -98,6 +135,7 @@ final class CompanionModel: ObservableObject {
     func select(_ mac: PairedMac) {
         selectedMac = mac
         status = nil
+        successfulConnectionLabel = nil
         UserDefaults.standard.set(mac.id.uuidString, forKey: DefaultsKey.selectedMac)
         send(.status)
     }
@@ -106,6 +144,8 @@ final class CompanionModel: ObservableObject {
         guard !isConnecting else { return }
         isConnecting = true
         message = nil
+        let requestIdentifier = UUID()
+        activeRequestIdentifier = requestIdentifier
 
         do {
             let nonce = try RemoteControlCrypto.randomData(count: 16)
@@ -128,12 +168,15 @@ final class CompanionModel: ObservableObject {
                 kind: .pairRequest,
                 payload: try JSONEncoder.capoteRemote.encode(request)
             )
-            sendWire(wire, to: mac.endpoint) { [weak self] result in
+            SocketCompanionTransport(endpoint: mac.endpoint, connectionLabel: "réseau local").send(wire) {
+                [weak self] result in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self, self.activeRequestIdentifier == requestIdentifier else { return }
+                    self.activeRequestIdentifier = nil
                     self.isConnecting = false
                     do {
-                        let responseWire = try result.get()
+                        let transportResponse = try result.get()
+                        let responseWire = transportResponse.wire
                         guard responseWire.kind == .pairResponse else { throw CompanionError.unexpectedResponse }
                         let response = try JSONDecoder.capoteRemote.decode(PairResponse.self, from: responseWire.payload)
                         guard response.accepted,
@@ -143,11 +186,12 @@ final class CompanionModel: ObservableObject {
                         }
                         let key = try RemoteControlCrypto.openDeviceKey(wrappedKey, pairingCode: code, nonce: nonce)
                         try self.keyStore.save(key: key, for: mac.id)
-                        let paired = PairedMac(id: mac.id, name: response.macName)
+                        let paired = PairedMac(id: mac.id, name: response.macName, tailscaleHost: nil)
                         self.pairedMacs.removeAll { $0.id == paired.id }
                         self.pairedMacs.append(paired)
                         self.savePairedMacs()
                         self.select(paired)
+                        self.successfulConnectionLabel = "Réseau local"
                         self.message = response.message
                         completion(true)
                     } catch {
@@ -157,6 +201,7 @@ final class CompanionModel: ObservableObject {
                 }
             }
         } catch {
+            activeRequestIdentifier = nil
             isConnecting = false
             message = "Code de jumelage invalide."
             completion(false)
@@ -166,14 +211,16 @@ final class CompanionModel: ObservableObject {
     func send(_ action: RemoteCommandAction) {
         guard !isConnecting,
               let mac = selectedMac,
-              let endpoint = endpoint(for: mac.id),
+              let transport = transport(for: mac),
               let key = keyStore.key(for: mac.id) else {
-            message = "Ce Mac n’est pas disponible sur le réseau local."
+            message = "Ce Mac n’est disponible ni localement ni via une adresse Tailscale configurée."
             return
         }
 
         isConnecting = true
         message = nil
+        let requestIdentifier = UUID()
+        activeRequestIdentifier = requestIdentifier
         do {
             let command = RemoteCommand(action: action)
             let encrypted = EncryptedRemotePayload(
@@ -184,12 +231,17 @@ final class CompanionModel: ObservableObject {
                 kind: .command,
                 payload: try JSONEncoder.capoteRemote.encode(encrypted)
             )
-            sendWire(wire, to: endpoint) { [weak self] result in
+            transport.send(wire) { [weak self] result in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self, self.activeRequestIdentifier == requestIdentifier else { return }
+                    self.activeRequestIdentifier = nil
                     self.isConnecting = false
                     do {
-                        let responseWire = try result.get()
+                        let transportResponse = try result.get()
+                        let responseWire = transportResponse.wire
+                        if responseWire.kind == .error {
+                            throw CompanionError.remoteRejected
+                        }
                         guard responseWire.kind == .response else { throw CompanionError.unexpectedResponse }
                         let encryptedResponse = try JSONDecoder.capoteRemote.decode(
                             EncryptedRemotePayload.self,
@@ -204,30 +256,103 @@ final class CompanionModel: ObservableObject {
                             throw CompanionError.unexpectedResponse
                         }
                         self.status = response.status
+                        self.successfulConnectionLabel = transportResponse.connectionLabel
                         self.message = response.message
+                    } catch CompanionError.remoteRejected {
+                        self.status = nil
+                        self.successfulConnectionLabel = nil
+                        self.message = "Le Mac a refusé cette clé de jumelage. Oubliez ce Mac sur l’iPhone, puis jumelez-le à nouveau avec un nouveau code."
                     } catch {
-                        self.message = "Réponse du Mac invalide ou interrompue."
+                        self.message = "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
                     }
                 }
             }
         } catch {
+            activeRequestIdentifier = nil
             isConnecting = false
             message = "Impossible de préparer la commande."
         }
     }
 
     func remove(_ mac: PairedMac) {
+        cancelConnection(message: nil)
         keyStore.remove(for: mac.id)
         pairedMacs.removeAll { $0.id == mac.id }
         savePairedMacs()
         if selectedMac?.id == mac.id {
             selectedMac = pairedMacs.first
             status = nil
+            successfulConnectionLabel = nil
         }
+        message = "Mac oublié sur cet iPhone. Jumelez-le à nouveau depuis le même réseau local."
+    }
+
+    func cancelConnection() {
+        cancelConnection(message: "Connexion annulée.")
+    }
+
+    @discardableResult
+    func saveTailscaleHost(_ value: String, for mac: PairedMac) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalized: String?
+        if trimmed.isEmpty {
+            normalized = nil
+        } else {
+            guard let validHost = RemoteDirectAccess.normalizedTailscaleHost(trimmed) else {
+                message = "Saisissez un nom MagicDNS complet en .ts.net ou une adresse IP Tailscale."
+                return false
+            }
+            normalized = validHost
+        }
+
+        guard let index = pairedMacs.firstIndex(where: { $0.id == mac.id }) else {
+            message = "Ce Mac n’est plus jumelé."
+            return false
+        }
+        pairedMacs[index].tailscaleHost = normalized
+        if selectedMac?.id == mac.id {
+            selectedMac = pairedMacs[index]
+        }
+        successfulConnectionLabel = nil
+        savePairedMacs()
+        message = normalized == nil
+            ? "Accès Tailscale supprimé."
+            : "Accès Tailscale enregistré. Le jumelage chiffré existant reste utilisé."
+        return true
     }
 
     private func endpoint(for identifier: UUID) -> NWEndpoint? {
         discoveredMacs.first { $0.id == identifier }?.endpoint
+    }
+
+    private func transport(for mac: PairedMac) -> CompanionTransport? {
+        var transports: [CompanionTransport] = []
+        let localEndpoint = endpoint(for: mac.id)
+        for route in RemoteDirectAccess.preferredRoutes(
+            hasTailscaleHost: mac.tailscaleHost != nil,
+            hasLocalEndpoint: localEndpoint != nil
+        ) {
+            switch route {
+            case .tailscale:
+                if let host = mac.tailscaleHost,
+                   let port = NWEndpoint.Port(rawValue: RemoteDirectAccess.port) {
+                    transports.append(SocketCompanionTransport(
+                        endpoint: .hostPort(host: NWEndpoint.Host(host), port: port),
+                        connectionLabel: "Tailscale"
+                    ))
+                }
+            case .localNetwork:
+                if let localEndpoint {
+                    transports.append(SocketCompanionTransport(
+                        endpoint: localEndpoint,
+                        connectionLabel: "Réseau local"
+                    ))
+                }
+            }
+        }
+        guard !transports.isEmpty else { return nil }
+        if transports.count == 1 { return transports[0] }
+        return AdaptiveCompanionTransport(transports: transports)
     }
 
     private func deviceIdentifier() -> UUID {
@@ -252,26 +377,112 @@ final class CompanionModel: ObservableObject {
         )
     }
 
-    private func sendWire(
+    private func cancelConnection(message: String?) {
+        activeRequestIdentifier = nil
+        isConnecting = false
+        if let message {
+            self.message = message
+        }
+    }
+
+}
+
+private enum CompanionError: Error {
+    case unexpectedResponse
+    case pairingRejected
+    case remoteRejected
+}
+
+private struct SocketCompanionTransport: CompanionTransport {
+    let endpoint: NWEndpoint
+    let connectionLabel: String
+
+    func send(
         _ wire: RemoteWireMessage,
-        to endpoint: NWEndpoint,
-        completion: @escaping (Result<RemoteWireMessage, Error>) -> Void
+        completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
     ) {
         do {
             let frame = try RemoteFrameCodec.encode(wire)
-            RemoteRequestSession(endpoint: endpoint, frame: frame, completion: completion).start()
+            SocketRequestSession(endpoint: endpoint, frame: frame) { result in
+                completion(result.map {
+                    CompanionTransportResponse(wire: $0, connectionLabel: connectionLabel)
+                })
+            }.start()
         } catch {
             completion(.failure(error))
         }
     }
 }
 
-private enum CompanionError: Error {
-    case unexpectedResponse
-    case pairingRejected
+private struct AdaptiveCompanionTransport: CompanionTransport {
+    let transports: [CompanionTransport]
+
+    var connectionLabel: String {
+        transports.map(\.connectionLabel).joined(separator: " ou ")
+    }
+
+    func send(
+        _ wire: RemoteWireMessage,
+        completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
+    ) {
+        FirstSuccessfulTransportRequest(
+            transports: transports,
+            wire: wire,
+            completion: completion
+        ).start()
+    }
 }
 
-private final class RemoteRequestSession {
+private final class FirstSuccessfulTransportRequest {
+    private let transports: [CompanionTransport]
+    private let wire: RemoteWireMessage
+    private let completion: (Result<CompanionTransportResponse, Error>) -> Void
+    private let queue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-adaptive-transport")
+    private var isCompleted = false
+    private var failureCount = 0
+    private var lastError: Error?
+
+    init(
+        transports: [CompanionTransport],
+        wire: RemoteWireMessage,
+        completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
+    ) {
+        self.transports = transports
+        self.wire = wire
+        self.completion = completion
+    }
+
+    func start() {
+        for (index, transport) in transports.enumerated() {
+            queue.asyncAfter(deadline: .now() + .milliseconds(index * 250)) { [self] in
+                guard !isCompleted else { return }
+                transport.send(wire) { [weak self] result in
+                    self?.queue.async {
+                        self?.receive(result)
+                    }
+                }
+            }
+        }
+    }
+
+    private func receive(_ result: Result<CompanionTransportResponse, Error>) {
+        guard !isCompleted else { return }
+        switch result {
+        case .success:
+            isCompleted = true
+            completion(result)
+        case .failure(let error):
+            failureCount += 1
+            lastError = error
+            if failureCount == transports.count {
+                isCompleted = true
+                completion(.failure(lastError ?? CompanionError.unexpectedResponse))
+            }
+        }
+    }
+}
+
+private final class SocketRequestSession {
     private let connection: NWConnection
     private let frame: Data
     private let completion: (Result<RemoteWireMessage, Error>) -> Void
@@ -300,7 +511,7 @@ private final class RemoteRequestSession {
             }
         }
         connection.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + 10) { [weak self] in
+        queue.asyncAfter(deadline: .now() + 5) { [weak self] in
             self?.finish(.failure(CompanionError.unexpectedResponse))
         }
     }

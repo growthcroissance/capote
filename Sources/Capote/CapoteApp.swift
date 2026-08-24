@@ -215,7 +215,7 @@ private struct MenuContent: View {
                 }
             }
 
-            Text("Depuis l’iPhone : consulter l’état et arrêter une session Capote active.")
+            Text("Depuis l’iPhone, localement ou via Tailscale : consulter l’état et arrêter une session Capote active.")
         }
 
         Divider()

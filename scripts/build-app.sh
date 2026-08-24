@@ -39,6 +39,7 @@ for capote_arch in arm64 x86_64; do
         -swift-version 5 \
         -parse-as-library \
         -O \
+        "$project_dir/Sources/CapoteRemoteCore/RemoteDirectAccess.swift" \
         "$project_dir/Sources/CapoteRemoteCore/RemoteControlProtocol.swift" \
         "$project_dir/Sources/CapoteRemoteCore/RemoteControlCrypto.swift" \
         "$project_dir/Sources/CapoteRemoteCore/RemoteFrameCodec.swift" \

@@ -31,8 +31,9 @@ lu ni conservé par l'application.
 - action « rétablir la veille et quitter ».
 - vérification des nouvelles versions officielles avec ouverture guidée de la
   GitHub Release, sans remplacement automatique de l’application.
-- compagnon iOS optionnel sur le même réseau local, avec découverte Bonjour,
-  jumelage à usage unique et commandes chiffrées propres à chaque appareil ;
+- compagnon iOS personnel avec découverte et jumelage Bonjour sur le réseau
+  local, puis accès distant facultatif par le réseau privé Tailscale de
+  l’utilisateur ;
 - consultation de l’état du Mac, arrêt d’une session Capote déjà active et
   révocation locale des iPhone jumelés.
 
@@ -169,14 +170,21 @@ Le lancement à l’ouverture de session utilise l’API native
 si macOS exige une nouvelle approbation, Capote l’indique et propose d’ouvrir
 directement le panneau correspondant de Réglages Système.
 
-### Compagnon iOS local
+### Compagnon iOS personnel
 
 Le prototype iOS se trouve dans `Companion/CapoteCompanion.xcodeproj`. Capote
-n’écoute le réseau local qu’après activation explicite de l’option dans son
+n’ouvre le contrôle réseau qu’après activation explicite de l’option dans son
 menu. Le jumelage utilise un code aléatoire de 96 bits à usage unique ; une clé
 distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Les
 commandes ont une validité de 30 secondes, sont protégées contre le rejeu et
 sont chiffrées avec ChaCha20-Poly1305.
+
+Après ce jumelage local, l’utilisateur peut enregistrer dans le compagnon le
+nom MagicDNS complet en `.ts.net` ou l’adresse IP Tailscale du Mac. Le même
+protocole chiffré passe alors sur le port privé `51684`. Capote refuse les noms
+et adresses qui ne correspondent pas à Tailscale. Cette fonction ne demande ni
+Funnel, ni Serve, ni redirection de port et ne rend pas le Mac publiquement
+joignable.
 
 Avec la signature ad hoc actuelle, aucun daemon root n’est embarqué ou installé.
 Le compagnon peut lire l’état et arrêter une session démarrée par Capote, car
@@ -185,5 +193,8 @@ session. Il ne peut pas démarrer une session ni modifier directement `pmset`.
 Cette limitation est volontaire et évite d’exposer une commande privilégiée que
 le Mac ne pourrait pas authentifier solidement.
 
-Le compagnon n’utilise aucun relais Internet, compte Capote ou télémétrie. Un
-Mac déjà endormi n’est pas réveillé par ce protocole.
+Le compagnon n’utilise aucun relais exploité par Capote, compte Capote ou
+télémétrie. Tailscale reste une dépendance personnelle facultative et
+transitoire ; le transport du compagnon est isolé afin de permettre une future
+implémentation CloudKit. Un Mac déjà endormi n’est pas réveillé par ce
+protocole.

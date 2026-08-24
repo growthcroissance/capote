@@ -43,7 +43,7 @@ final class RemoteControlController: ObservableObject {
 
     func cancelPairing() {
         pairingCode = nil
-        statusText = "Contrôle iPhone disponible sur le réseau local."
+        statusText = "Contrôle iPhone disponible localement et via Tailscale."
     }
 
     func remove(_ device: PairedRemoteDevice) {
@@ -74,7 +74,7 @@ final class RemoteControlController: ObservableObject {
             isEnabled = true
             statusText = "Démarrage du contrôle iPhone…"
         } catch {
-            statusText = "Impossible d’écouter sur le réseau local : \(error.localizedDescription)"
+            statusText = "Impossible d’ouvrir le contrôle iPhone : \(error.localizedDescription)"
         }
     }
 

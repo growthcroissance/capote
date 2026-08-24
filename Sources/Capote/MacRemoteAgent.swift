@@ -37,7 +37,10 @@ final class MacRemoteAgent: @unchecked Sendable {
     }
 
     func start() throws {
-        let listener = try NWListener(using: .tcp)
+        guard let port = NWEndpoint.Port(rawValue: RemoteDirectAccess.port) else {
+            throw RemoteAgentError.invalidPort
+        }
+        let listener = try NWListener(using: .tcp, on: port)
         listener.service = NWListener.Service(
             name: serviceIdentifier.uuidString,
             type: CapoteRemoteProtocol.bonjourType
@@ -46,7 +49,9 @@ final class MacRemoteAgent: @unchecked Sendable {
             guard let self else { return }
             switch state {
             case .ready:
-                self.eventHandler("Contrôle iPhone disponible sur le réseau local.")
+                self.eventHandler(
+                    "Contrôle iPhone disponible localement et via Tailscale sur le port \(RemoteDirectAccess.port)."
+                )
             case .failed(let error):
                 self.eventHandler("Contrôle iPhone indisponible : \(error.localizedDescription)")
                 self.stop()
@@ -232,6 +237,7 @@ final class MacRemoteAgent: @unchecked Sendable {
 }
 
 private enum RemoteAgentError: Error {
+    case invalidPort
     case pairingUnavailable
     case wrongService
     case unknownDevice

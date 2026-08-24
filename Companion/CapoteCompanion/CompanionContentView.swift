@@ -1,9 +1,22 @@
 import SwiftUI
+import CapoteRemoteCore
+
+private enum CompanionSheetDestination: Identifiable {
+    case pairing(DiscoveredMac)
+    case tailscale(PairedMac)
+
+    var id: String {
+        switch self {
+        case .pairing(let mac): return "pairing-\(mac.id.uuidString)"
+        case .tailscale(let mac): return "tailscale-\(mac.id.uuidString)"
+        }
+    }
+}
 
 struct CompanionContentView: View {
     @ObservedObject var model: CompanionModel
-    @State private var pairingTarget: DiscoveredMac?
-    @State private var pairingCode = ""
+    @State private var presentedSheet: CompanionSheetDestination?
+    @State private var showingForgetMacConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -12,6 +25,10 @@ struct CompanionContentView: View {
                     Section("\(selected.name)") {
                         LabeledContent("Connexion", value: model.connectionText)
                         LabeledContent("Veille capot fermé", value: model.sleepStateText)
+
+                        if let host = selected.tailscaleHost {
+                            LabeledContent("Adresse distante", value: host)
+                        }
 
                         if let description = model.status?.activeSessionDescription {
                             LabeledContent("Session", value: description)
@@ -23,6 +40,20 @@ struct CompanionContentView: View {
 
                         Button("Actualiser l’état") {
                             model.send(.status)
+                        }
+
+                        if model.isConnecting {
+                            Button("Annuler la connexion") {
+                                model.cancelConnection()
+                            }
+                        }
+
+                        Button("Configurer l’accès Tailscale…") {
+                            presentedSheet = .tailscale(selected)
+                        }
+
+                        Button("Oublier ce Mac…", role: .destructive) {
+                            showingForgetMacConfirmation = true
                         }
 
                         if model.status?.isSleepDisabled == true,
@@ -45,7 +76,7 @@ struct CompanionContentView: View {
                     }
                 }
 
-                Section("Mac jumelés") {
+                Section {
                     if model.pairedMacs.isEmpty {
                         Text("Aucun Mac jumelé")
                             .foregroundStyle(.secondary)
@@ -68,6 +99,12 @@ struct CompanionContentView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Mac jumelés")
+                } footer: {
+                    if !model.pairedMacs.isEmpty {
+                        Text("Pour retirer un jumelage, balayez sa ligne vers la gauche ou utilisez « Oublier ce Mac… » dans sa fiche.")
+                    }
                 }
 
                 Section("Mac disponibles") {
@@ -79,8 +116,7 @@ struct CompanionContentView: View {
                         !model.pairedMacs.contains(where: { $0.id == discovered.id })
                     }) { mac in
                         Button {
-                            pairingTarget = mac
-                            pairingCode = ""
+                            presentedSheet = .pairing(mac)
                         } label: {
                             Label(mac.name, systemImage: "plus.circle")
                         }
@@ -95,38 +131,127 @@ struct CompanionContentView: View {
             }
             .navigationTitle("Capote")
             .refreshable { model.refresh() }
-            .sheet(item: $pairingTarget) { mac in
-                NavigationStack {
-                    Form {
-                        Section("Code affiché sur le Mac") {
-                            TextField("XXXX-XXXX-XXXX-XXXX-XXXX-XXXX", text: $pairingCode)
-                                .textInputAutocapitalization(.characters)
-                                .autocorrectionDisabled()
-                                .font(.system(.body, design: .monospaced))
-                        }
+            .sheet(item: $presentedSheet) { destination in
+                switch destination {
+                case .pairing(let mac):
+                    PairingSheet(model: model, mac: mac)
+                case .tailscale(let mac):
+                    TailscaleConfigurationSheet(model: model, mac: mac)
+                }
+            }
+            .confirmationDialog(
+                "Oublier ce Mac ?",
+                isPresented: $showingForgetMacConfirmation,
+                titleVisibility: .visible
+            ) {
+                if let selected = model.selectedMac {
+                    Button("Oublier \(selected.name)", role: .destructive) {
+                        model.remove(selected)
+                    }
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("La clé conservée sur cet iPhone sera supprimée. Un nouveau code affiché par le Mac sera nécessaire pour le jumeler à nouveau.")
+            }
+            .onAppear { model.startBrowsing() }
+        }
+    }
+}
 
-                        Section {
-                            Text("Le code est à usage unique. Le jumelage reste limité au réseau local et la clé est conservée dans le Trousseau de cet iPhone.")
-                                .font(.footnote)
+private struct PairingSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var model: CompanionModel
+    let mac: DiscoveredMac
+    @State private var pairingCode = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Code affiché sur le Mac") {
+                    TextField("XXXX-XXXX-XXXX-XXXX-XXXX-XXXX", text: $pairingCode)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .font(.system(.body, design: .monospaced))
+                }
+
+                Section {
+                    Text("Le code est à usage unique. Le jumelage reste limité au réseau local et la clé est conservée dans le Trousseau de cet iPhone.")
+                        .font(.footnote)
+                }
+            }
+            .navigationTitle(mac.name)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") {
+                        model.cancelConnection()
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Jumeler") {
+                        model.pair(mac, code: pairingCode) { success in
+                            if success { dismiss() }
                         }
                     }
-                    .navigationTitle(mac.name)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Annuler") { pairingTarget = nil }
-                        }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Jumeler") {
-                                model.pair(mac, code: pairingCode) { success in
-                                    if success { pairingTarget = nil }
-                                }
+                    .disabled(pairingCode.filter(\.isHexDigit).count != 24)
+                }
+            }
+        }
+    }
+}
+
+private struct TailscaleConfigurationSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var model: CompanionModel
+    let mac: PairedMac
+    @State private var host: String
+
+    init(model: CompanionModel, mac: PairedMac) {
+        self.model = model
+        self.mac = mac
+        _host = State(initialValue: mac.tailscaleHost ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Adresse du Mac dans Tailscale") {
+                    TextField("mac.nom-du-tailnet.ts.net", text: $host)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                }
+
+                Section {
+                    Text("Utilisez le nom MagicDNS complet en .ts.net ou l’adresse IP Tailscale du Mac. Capote écoute le port \(RemoteDirectAccess.port). N’activez ni Funnel, ni Serve, ni redirection de port sur votre box.")
+                        .font(.footnote)
+                }
+
+                if mac.tailscaleHost != nil {
+                    Section {
+                        Button("Supprimer l’accès Tailscale", role: .destructive) {
+                            if model.saveTailscaleHost("", for: mac) {
+                                dismiss()
                             }
-                            .disabled(pairingCode.filter(\.isHexDigit).count != 24)
                         }
                     }
                 }
             }
-            .onAppear { model.startBrowsing() }
+            .navigationTitle("Accès distant")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Enregistrer") {
+                        if model.saveTailscaleHost(host, for: mac) {
+                            dismiss()
+                        }
+                    }
+                    .disabled(host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
         }
     }
 }

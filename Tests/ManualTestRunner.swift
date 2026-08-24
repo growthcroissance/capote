@@ -22,7 +22,9 @@ struct ManualTestRunner {
         testRemoteFrameCodec()
         testRemoteTamperRejection()
         testRemoteExpiredCommandRejection()
-        print("18 tests réussis")
+        testTailscaleAddressValidation()
+        testTailscaleRoutePreference()
+        print("20 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -328,6 +330,45 @@ struct ManualTestRunner {
         } catch {
             expect(false, "commande distante expirée rejetée")
         }
+    }
+
+    private static func testTailscaleAddressValidation() {
+        expect(RemoteDirectAccess.port == 51_684, "port distant stable")
+        expect(
+            RemoteDirectAccess.normalizedTailscaleHost(" MAC.PERSO.TS.NET. ") == "mac.perso.ts.net",
+            "nom MagicDNS Tailscale normalisé"
+        )
+        expect(
+            RemoteDirectAccess.normalizedTailscaleHost("100.64.0.1") == "100.64.0.1",
+            "adresse IPv4 Tailscale acceptée"
+        )
+        expect(
+            RemoteDirectAccess.normalizedTailscaleHost("[fd7a:115c:a1e0::1]") == "fd7a:115c:a1e0::1",
+            "adresse IPv6 Tailscale acceptée"
+        )
+        expect(
+            RemoteDirectAccess.normalizedTailscaleHost("example.com") == nil
+                && RemoteDirectAccess.normalizedTailscaleHost("192.168.1.10") == nil
+                && RemoteDirectAccess.normalizedTailscaleHost("100.128.0.1") == nil,
+            "adresse hors Tailscale rejetée"
+        )
+    }
+
+    private static func testTailscaleRoutePreference() {
+        expect(
+            RemoteDirectAccess.preferredRoutes(
+                hasTailscaleHost: true,
+                hasLocalEndpoint: true
+            ) == [.localNetwork, .tailscale],
+            "réseau local prioritaire lorsqu’il est disponible"
+        )
+        expect(
+            RemoteDirectAccess.preferredRoutes(
+                hasTailscaleHost: false,
+                hasLocalEndpoint: true
+            ) == [.localNetwork],
+            "réseau local seul sans Tailscale"
+        )
     }
 
     private static func expect(_ condition: @autoclosure () -> Bool, _ name: String) {
