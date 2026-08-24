@@ -26,11 +26,5 @@
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>Capote utilise le réseau local uniquement pour communiquer avec votre iPhone jumelé.</string>
-    <key>NSBonjourServices</key>
-    <array>
-        <string>_capote._tcp</string>
-    </array>
 </dict>
 </plist>

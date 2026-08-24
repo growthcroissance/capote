@@ -31,10 +31,6 @@ lu ni conservé par l'application.
 - action « rétablir la veille et quitter ».
 - vérification des nouvelles versions officielles avec ouverture guidée de la
   GitHub Release, sans remplacement automatique de l’application.
-- compagnon iOS optionnel sur le même réseau local, avec découverte Bonjour,
-  jumelage à usage unique et commandes chiffrées propres à chaque appareil ;
-- consultation de l’état du Mac, arrêt d’une session Capote déjà active et
-  révocation locale des iPhone jumelés.
 
 Les sessions limitées continuent même si Capote est quittée et rétablissent la
 veille lorsque leur condition prend fin. Une session sans limite reste active
@@ -168,22 +164,3 @@ Le lancement à l’ouverture de session utilise l’API native
 `SMAppService.mainApp` de macOS. Son état est relu à chaque ouverture du menu ;
 si macOS exige une nouvelle approbation, Capote l’indique et propose d’ouvrir
 directement le panneau correspondant de Réglages Système.
-
-### Compagnon iOS local
-
-Le prototype iOS se trouve dans `Companion/CapoteCompanion.xcodeproj`. Capote
-n’écoute le réseau local qu’après activation explicite de l’option dans son
-menu. Le jumelage utilise un code aléatoire de 96 bits à usage unique ; une clé
-distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Les
-commandes ont une validité de 30 secondes, sont protégées contre le rejeu et
-sont chiffrées avec ChaCha20-Poly1305.
-
-Avec la signature ad hoc actuelle, aucun daemon root n’est embarqué ou installé.
-Le compagnon peut lire l’état et arrêter une session démarrée par Capote, car
-l’arrêt passe par le fichier d’annulation déjà surveillé par le helper de cette
-session. Il ne peut pas démarrer une session ni modifier directement `pmset`.
-Cette limitation est volontaire et évite d’exposer une commande privilégiée que
-le Mac ne pourrait pas authentifier solidement.
-
-Le compagnon n’utilise aucun relais Internet, compte Capote ou télémétrie. Un
-Mac déjà endormi n’est pas réveillé par ce protocole.

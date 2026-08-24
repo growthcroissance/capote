@@ -19,6 +19,14 @@ vulnérabilité non corrigée ; suivez [SECURITY.md](SECURITY.md).
 Les corrections urgentes partent de `main` sur `hotfix/X.Y.Z` et sont ensuite
 reportées vers `staging` et `develop`.
 
+### Fonctionnalité personnelle hors diffusion
+
+Le compagnon iOS reste volontairement isolé dans la branche longue durée
+`feature/ios-companion`. Cette branche sert aux builds personnels et ne doit pas
+alimenter `develop`, `staging`, `main` ou une release tant que sa distribution
+Apple n’a pas été explicitement réactivée. Une synchronisation future avec le
+produit public doit être préparée et testée comme une intégration dédiée.
+
 ## Commits
 
 Utiliser Conventional Commits, par exemple :
