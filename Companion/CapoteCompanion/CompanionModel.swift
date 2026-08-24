@@ -1,9 +1,7 @@
 import Foundation
 import Network
 import UIKit
-#if SWIFT_PACKAGE
 import CapoteRemoteCore
-#endif
 
 struct DiscoveredMac: Identifiable, Equatable {
     let id: UUID

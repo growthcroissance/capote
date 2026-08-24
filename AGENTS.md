@@ -44,6 +44,8 @@ Les artefacts générés se trouvent dans `dist/` et ne sont pas versionnés.
 ## Organisation du code
 
 - `Sources/Capote/` : interface de barre des menus et contrôleur de session ;
+- `Companion/` : projet Xcode et interface du compagnon iOS ;
+- `Sources/CapoteRemoteCore/` : package local partagé par les deux applications ;
 - `Sources/CapoteSessionHelper/` : helper de restauration privilégié ;
 - `Tests/CapoteTests/` : tests Swift ;
 - `scripts/` : tests et construction du bundle ;

@@ -11,10 +11,8 @@
 		A10000000000000000000002 /* CompanionContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* CompanionContentView.swift */; };
 		A10000000000000000000003 /* CompanionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* CompanionModel.swift */; };
 		A10000000000000000000004 /* CompanionKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* CompanionKeyStore.swift */; };
-		A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* RemoteControlProtocol.swift */; };
-		A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* RemoteControlCrypto.swift */; };
-		A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* RemoteFrameCodec.swift */; };
 		A10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Assets.xcassets */; };
+		A10000000000000000000009 /* CapoteRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000002 /* CapoteRemoteCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,9 +20,6 @@
 		A20000000000000000000002 /* CompanionContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionContentView.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* CompanionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionModel.swift; sourceTree = "<group>"; };
 		A20000000000000000000004 /* CompanionKeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionKeyStore.swift; sourceTree = "<group>"; };
-		A20000000000000000000005 /* RemoteControlProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteControlProtocol.swift; path = ../Sources/CapoteRemoteCore/RemoteControlProtocol.swift; sourceTree = "<group>"; };
-		A20000000000000000000006 /* RemoteControlCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteControlCrypto.swift; path = ../Sources/CapoteRemoteCore/RemoteControlCrypto.swift; sourceTree = "<group>"; };
-		A20000000000000000000007 /* RemoteFrameCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteFrameCodec.swift; path = ../Sources/CapoteRemoteCore/RemoteFrameCodec.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000009 /* CapoteCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapoteCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000000000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -35,6 +30,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000009 /* CapoteRemoteCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,7 +41,6 @@
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* CapoteCompanion */,
-				A40000000000000000000003 /* Shared */,
 				A40000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,16 +56,6 @@
 				A2000000000000000000000A /* Assets.xcassets */,
 			);
 			path = CapoteCompanion;
-			sourceTree = "<group>";
-		};
-		A40000000000000000000003 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000005 /* RemoteControlProtocol.swift */,
-				A20000000000000000000006 /* RemoteControlCrypto.swift */,
-				A20000000000000000000007 /* RemoteFrameCodec.swift */,
-			);
-			name = Shared;
 			sourceTree = "<group>";
 		};
 		A40000000000000000000004 /* Products */ = {
@@ -97,6 +82,9 @@
 			dependencies = (
 			);
 			name = CapoteCompanion;
+			packageProductDependencies = (
+				A90000000000000000000002 /* CapoteRemoteCore */,
+			);
 			productName = CapoteCompanion;
 			productReference = A20000000000000000000009 /* CapoteCompanion.app */;
 			productType = "com.apple.product-type.application";
@@ -125,6 +113,9 @@
 				Base,
 			);
 			mainGroup = A40000000000000000000001;
+			packageReferences = (
+				A90000000000000000000001 /* XCLocalSwiftPackageReference ".." */,
+			);
 			productRefGroup = A40000000000000000000004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -154,9 +145,6 @@
 				A10000000000000000000002 /* CompanionContentView.swift in Sources */,
 				A10000000000000000000003 /* CompanionModel.swift in Sources */,
 				A10000000000000000000004 /* CompanionKeyStore.swift in Sources */,
-				A10000000000000000000005 /* RemoteControlProtocol.swift in Sources */,
-				A10000000000000000000006 /* RemoteControlCrypto.swift in Sources */,
-				A10000000000000000000007 /* RemoteFrameCodec.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +239,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A90000000000000000000001 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "..";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A90000000000000000000002 /* CapoteRemoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000001 /* XCLocalSwiftPackageReference ".." */;
+			productName = CapoteRemoteCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A50000000000000000000002 /* Project object */;
 }

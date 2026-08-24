@@ -5,6 +5,10 @@ utilise un code aléatoire de 96 bits affiché une seule fois par le Mac. Une cl
 distincte est ensuite conservée dans le Trousseau de chaque appareil ; les
 commandes et réponses sont chiffrées avec ChaCha20-Poly1305.
 
+Capote macOS et le compagnon iOS sont deux applications distinctes conservées
+dans le même dépôt. Le target iOS dépend du produit Swift Package local
+`CapoteRemoteCore`, qui porte leur protocole et leur chiffrement communs.
+
 ## Prérequis
 
 - Xcode complet avec le SDK iOS 17 ou ultérieur ;
