@@ -10,7 +10,9 @@ comportement normal à la fin de la session.
 
 - macOS 14 ou ultérieur ;
 - Swift Package Manager et outils de développement Apple ;
-- application de barre des menus, sans service distant ni secret ;
+- application de barre des menus et compagnon iOS local, sans relais Internet ;
+- clés de jumelage propres à chaque appareil, conservées uniquement dans le
+  Trousseau local ;
 - installation personnelle manuelle dans `/Applications`.
 
 ## Commandes de validation
@@ -34,10 +36,16 @@ Les artefacts générés se trouvent dans `dist/` et ne sont pas versionnés.
 - Ne jamais contourner l’avertissement thermique : un Mac actif et fermé doit
   rester correctement ventilé.
 - Ne pas ajouter de mécanisme de conservation du mot de passe administrateur.
+- Ne jamais ouvrir le contrôle réseau par défaut ni accepter une commande non
+  chiffrée, expirée, rejouée ou provenant d’un appareil révoqué.
+- Sans identité Developer ID stable, limiter le compagnon à la lecture d’état et
+  à l’arrêt d’une session Capote existante ; ne pas exposer de démarrage distant.
 
 ## Organisation du code
 
 - `Sources/Capote/` : interface de barre des menus et contrôleur de session ;
+- `Companion/` : projet Xcode et interface du compagnon iOS ;
+- `Sources/CapoteRemoteCore/` : package local partagé par les deux applications ;
 - `Sources/CapoteSessionHelper/` : helper de restauration privilégié ;
 - `Tests/CapoteTests/` : tests Swift ;
 - `scripts/` : tests et construction du bundle ;

@@ -155,6 +155,10 @@ final class SleepControlController: ObservableObject {
     private var quitAfterSession = false
     private var lastSessionExitStatus: Int32?
 
+    var hasCancellableSession: Bool {
+        cancellationURL != nil
+    }
+
     var statusText: String {
         if isBusy {
             return "Autorisation ou modification en cours…"

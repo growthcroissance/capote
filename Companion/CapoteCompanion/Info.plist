@@ -4,33 +4,35 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>fr</string>
-    <key>CFBundleExecutable</key>
+    <key>CFBundleDisplayName</key>
     <string>Capote</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
-    <string>fr.benjaminfarrudja.capote</string>
-    <key>CFBundleIconFile</key>
-    <string>Capote.icns</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Capote</string>
+    <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
-    <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2026 GROWTH Croissance</string>
     <key>CFBundleShortVersionString</key>
-	<string>1.4.0</string>
-	<key>CFBundleVersion</key>
-	<string>11</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
-    <key>LSUIElement</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
     <true/>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>Capote utilise le réseau local uniquement pour communiquer avec votre iPhone jumelé.</string>
     <key>NSBonjourServices</key>
     <array>
         <string>_capote._tcp</string>
+    </array>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Capote recherche uniquement vos Mac jumelés sur le réseau local.</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
     </array>
 </dict>
 </plist>

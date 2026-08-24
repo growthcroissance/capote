@@ -39,10 +39,16 @@ for capote_arch in arm64 x86_64; do
         -swift-version 5 \
         -parse-as-library \
         -O \
+        "$project_dir/Sources/CapoteRemoteCore/RemoteControlProtocol.swift" \
+        "$project_dir/Sources/CapoteRemoteCore/RemoteControlCrypto.swift" \
+        "$project_dir/Sources/CapoteRemoteCore/RemoteFrameCodec.swift" \
         "$project_dir/Sources/Capote/AppUpdateCore.swift" \
         "$project_dir/Sources/Capote/AppUpdater.swift" \
         "$project_dir/Sources/Capote/CapoteApp.swift" \
         "$project_dir/Sources/Capote/LaunchAtLoginController.swift" \
+        "$project_dir/Sources/Capote/MacRemoteAgent.swift" \
+        "$project_dir/Sources/Capote/RemoteControlController.swift" \
+        "$project_dir/Sources/Capote/RemoteDeviceKeyStore.swift" \
         "$project_dir/Sources/Capote/SleepControlController.swift" \
         -o "$build_dir/Capote-$capote_arch"
 
@@ -55,6 +61,7 @@ for capote_arch in arm64 x86_64; do
         -O \
         "$project_dir/Sources/CapoteSessionHelper/main.swift" \
         -o "$build_dir/CapoteSession-$capote_arch"
+
 done
 
 lipo -create "$build_dir/Capote-arm64" "$build_dir/Capote-x86_64" -output "$contents_dir/MacOS/Capote"
