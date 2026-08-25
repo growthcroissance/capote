@@ -73,12 +73,15 @@ final class CompanionModel: ObservableObject {
 
     init() {
         pairedMacs = Self.loadPairedMacs()
-        if let selected = UserDefaults.standard.string(forKey: DefaultsKey.selectedMac),
-           let identifier = UUID(uuidString: selected) {
-            selectedMac = pairedMacs.first { $0.id == identifier }
-        } else {
-            selectedMac = pairedMacs.first
-        }
+        let persistedIdentifier = UserDefaults.standard
+            .string(forKey: DefaultsKey.selectedMac)
+            .flatMap(UUID.init(uuidString:))
+        let selectedIdentifier = CompanionSelectionPolicy.selectedIdentifier(
+            persistedIdentifier: persistedIdentifier,
+            availableIdentifiers: pairedMacs.map(\.id)
+        )
+        selectedMac = pairedMacs.first { $0.id == selectedIdentifier }
+        persistSelectedMac()
     }
 
     func startBrowsing() {
@@ -136,7 +139,7 @@ final class CompanionModel: ObservableObject {
         selectedMac = mac
         status = nil
         successfulConnectionLabel = nil
-        UserDefaults.standard.set(mac.id.uuidString, forKey: DefaultsKey.selectedMac)
+        persistSelectedMac()
         send(.status)
     }
 
@@ -283,6 +286,7 @@ final class CompanionModel: ObservableObject {
             selectedMac = pairedMacs.first
             status = nil
             successfulConnectionLabel = nil
+            persistSelectedMac()
         }
         message = "Mac oublié sur cet iPhone. Jumelez-le à nouveau depuis le même réseau local."
     }
@@ -326,7 +330,7 @@ final class CompanionModel: ObservableObject {
     }
 
     private func transport(for mac: PairedMac) -> CompanionTransport? {
-        var transports: [CompanionTransport] = []
+        var transports: [SocketCompanionTransport] = []
         let localEndpoint = endpoint(for: mac.id)
         for route in RemoteDirectAccess.preferredRoutes(
             hasTailscaleHost: mac.tailscaleHost != nil,
@@ -377,6 +381,15 @@ final class CompanionModel: ObservableObject {
         )
     }
 
+    private func persistSelectedMac() {
+        let defaults = UserDefaults.standard
+        if let selectedMac {
+            defaults.set(selectedMac.id.uuidString, forKey: DefaultsKey.selectedMac)
+        } else {
+            defaults.removeObject(forKey: DefaultsKey.selectedMac)
+        }
+    }
+
     private func cancelConnection(message: String?) {
         activeRequestIdentifier = nil
         isConnecting = false
@@ -415,7 +428,7 @@ private struct SocketCompanionTransport: CompanionTransport {
 }
 
 private struct AdaptiveCompanionTransport: CompanionTransport {
-    let transports: [CompanionTransport]
+    let transports: [SocketCompanionTransport]
 
     var connectionLabel: String {
         transports.map(\.connectionLabel).joined(separator: " ou ")
@@ -425,60 +438,143 @@ private struct AdaptiveCompanionTransport: CompanionTransport {
         _ wire: RemoteWireMessage,
         completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
     ) {
-        FirstSuccessfulTransportRequest(
-            transports: transports,
-            wire: wire,
-            completion: completion
-        ).start()
+        do {
+            let frame = try RemoteFrameCodec.encode(wire)
+            FirstReadySocketRequestSession(
+                transports: transports,
+                frame: frame,
+                completion: completion
+            ).start()
+        } catch {
+            completion(.failure(error))
+        }
     }
 }
 
-private final class FirstSuccessfulTransportRequest {
-    private let transports: [CompanionTransport]
-    private let wire: RemoteWireMessage
+private final class FirstReadySocketRequestSession {
+    private let transports: [SocketCompanionTransport]
+    private let frame: Data
     private let completion: (Result<CompanionTransportResponse, Error>) -> Void
     private let queue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-adaptive-transport")
-    private var isCompleted = false
+    private var connections: [NWConnection] = []
+    private var selectedConnection: NWConnection?
+    private var completed = false
     private var failureCount = 0
     private var lastError: Error?
 
     init(
-        transports: [CompanionTransport],
-        wire: RemoteWireMessage,
+        transports: [SocketCompanionTransport],
+        frame: Data,
         completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
     ) {
         self.transports = transports
-        self.wire = wire
+        self.frame = frame
         self.completion = completion
     }
 
     func start() {
         for (index, transport) in transports.enumerated() {
             queue.asyncAfter(deadline: .now() + .milliseconds(index * 250)) { [self] in
-                guard !isCompleted else { return }
-                transport.send(wire) { [weak self] result in
-                    self?.queue.async {
-                        self?.receive(result)
+                startConnection(for: transport)
+            }
+        }
+        queue.asyncAfter(deadline: .now() + 5) { [self] in
+            finish(.failure(lastError ?? CompanionError.unexpectedResponse))
+        }
+    }
+
+    private func startConnection(for transport: SocketCompanionTransport) {
+        guard !completed, selectedConnection == nil else { return }
+
+        let connection = NWConnection(to: transport.endpoint, using: .tcp)
+        connections.append(connection)
+        connection.stateUpdateHandler = { [self] state in
+            switch state {
+            case .ready:
+                select(connection, label: transport.connectionLabel)
+            case .failed(let error):
+                connectionFailed(connection, error: error)
+            case .cancelled:
+                if selectedConnection == nil {
+                    connectionFailed(connection, error: CompanionError.unexpectedResponse)
+                }
+            default:
+                break
+            }
+        }
+        connection.start(queue: queue)
+    }
+
+    private func select(_ connection: NWConnection, label: String) {
+        guard !completed, selectedConnection == nil else { return }
+        selectedConnection = connection
+
+        for candidate in connections where candidate !== connection {
+            candidate.stateUpdateHandler = nil
+            candidate.cancel()
+        }
+        connections = [connection]
+
+        connection.send(content: frame, completion: .contentProcessed { [self] error in
+            if let error {
+                finish(.failure(error))
+            } else {
+                receiveHeader(on: connection, label: label)
+            }
+        })
+    }
+
+    private func connectionFailed(_ connection: NWConnection, error: Error) {
+        guard !completed, selectedConnection == nil else { return }
+        connection.stateUpdateHandler = nil
+        connection.cancel()
+        connections.removeAll { $0 === connection }
+        failureCount += 1
+        lastError = error
+        if failureCount == transports.count {
+            finish(.failure(error))
+        }
+    }
+
+    private func receiveHeader(on connection: NWConnection, label: String) {
+        connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [self] data, _, _, error in
+            guard error == nil, let header = data, header.count == 4 else {
+                finish(.failure(error ?? CompanionError.unexpectedResponse))
+                return
+            }
+            let length = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+            guard length > 0, length <= CapoteRemoteProtocol.maximumFrameSize else {
+                finish(.failure(CompanionError.unexpectedResponse))
+                return
+            }
+            connection.receive(minimumIncompleteLength: Int(length), maximumLength: Int(length)) {
+                [self] data, _, _, error in
+                do {
+                    guard error == nil, let data, data.count == Int(length) else {
+                        throw error ?? CompanionError.unexpectedResponse
                     }
+                    let wire = try RemoteFrameCodec.decode(header + data)
+                    finish(.success(CompanionTransportResponse(
+                        wire: wire,
+                        connectionLabel: label
+                    )))
+                } catch {
+                    finish(.failure(error))
                 }
             }
         }
     }
 
-    private func receive(_ result: Result<CompanionTransportResponse, Error>) {
-        guard !isCompleted else { return }
-        switch result {
-        case .success:
-            isCompleted = true
-            completion(result)
-        case .failure(let error):
-            failureCount += 1
-            lastError = error
-            if failureCount == transports.count {
-                isCompleted = true
-                completion(.failure(lastError ?? CompanionError.unexpectedResponse))
-            }
+    private func finish(_ result: Result<CompanionTransportResponse, Error>) {
+        guard !completed else { return }
+        completed = true
+        for connection in connections {
+            connection.stateUpdateHandler = nil
+            connection.cancel()
         }
+        connections.removeAll()
+        selectedConnection = nil
+        completion(result)
     }
 }
 

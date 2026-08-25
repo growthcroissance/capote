@@ -74,3 +74,16 @@ public enum RemoteDirectAccess {
         }
     }
 }
+
+public enum CompanionSelectionPolicy {
+    public static func selectedIdentifier(
+        persistedIdentifier: UUID?,
+        availableIdentifiers: [UUID]
+    ) -> UUID? {
+        if let persistedIdentifier,
+           availableIdentifiers.contains(persistedIdentifier) {
+            return persistedIdentifier
+        }
+        return availableIdentifiers.first
+    }
+}

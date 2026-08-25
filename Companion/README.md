@@ -38,10 +38,11 @@ limites de reprovisionnement imposées par Apple.
    `.ts.net`, soit son adresse IP Tailscale.
 4. Dans le compagnon, sélectionner le Mac, ouvrir « Configurer l’accès
    Tailscale… » et enregistrer cette destination.
-5. Ouvrir le compagnon et actualiser l’état. Capote essaie immédiatement le
-   réseau local, puis démarre Tailscale 250 ms plus tard si nécessaire ; le
-   premier transport qui répond correctement est conservé. Le Wi-Fi local reste
-   donc prioritaire lorsque le VPN est coupé, tandis que Tailscale prend le
+5. Ouvrir le compagnon et actualiser l’état. Capote prépare immédiatement la
+   connexion locale, puis démarre la connexion Tailscale 250 ms plus tard si
+   nécessaire. La première connexion établie est conservée et l’autre est
+   annulée avant l’envoi d’une unique commande chiffrée. Le Wi-Fi local reste
+   donc prioritaire lorsqu’il répond rapidement, tandis que Tailscale prend le
    relais si Bonjour est indisponible ou obsolète.
 
 Pour supprimer un ancien jumelage sur l’iPhone, sélectionner le Mac puis toucher

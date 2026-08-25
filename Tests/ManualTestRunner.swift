@@ -24,7 +24,8 @@ struct ManualTestRunner {
         testRemoteExpiredCommandRejection()
         testTailscaleAddressValidation()
         testTailscaleRoutePreference()
-        print("20 tests réussis")
+        testCompanionSelectionFallback()
+        print("21 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -368,6 +369,25 @@ struct ManualTestRunner {
                 hasLocalEndpoint: true
             ) == [.localNetwork],
             "réseau local seul sans Tailscale"
+        )
+    }
+
+    private static func testCompanionSelectionFallback() {
+        let removedIdentifier = UUID()
+        let remainingIdentifier = UUID()
+        expect(
+            CompanionSelectionPolicy.selectedIdentifier(
+                persistedIdentifier: removedIdentifier,
+                availableIdentifiers: [remainingIdentifier]
+            ) == remainingIdentifier,
+            "sélection de secours après suppression du Mac mémorisé"
+        )
+        expect(
+            CompanionSelectionPolicy.selectedIdentifier(
+                persistedIdentifier: remainingIdentifier,
+                availableIdentifiers: [remainingIdentifier]
+            ) == remainingIdentifier,
+            "sélection persistée encore disponible"
         )
     }
 

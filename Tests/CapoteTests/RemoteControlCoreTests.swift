@@ -38,6 +38,32 @@ final class RemoteControlCoreTests: XCTestCase {
         )
     }
 
+    func testCompanionSelectionFallsBackWhenPersistedMacWasRemoved() {
+        let removedIdentifier = UUID()
+        let remainingIdentifier = UUID()
+
+        XCTAssertEqual(
+            CompanionSelectionPolicy.selectedIdentifier(
+                persistedIdentifier: removedIdentifier,
+                availableIdentifiers: [remainingIdentifier]
+            ),
+            remainingIdentifier
+        )
+        XCTAssertEqual(
+            CompanionSelectionPolicy.selectedIdentifier(
+                persistedIdentifier: remainingIdentifier,
+                availableIdentifiers: [remainingIdentifier, UUID()]
+            ),
+            remainingIdentifier
+        )
+        XCTAssertNil(
+            CompanionSelectionPolicy.selectedIdentifier(
+                persistedIdentifier: removedIdentifier,
+                availableIdentifiers: []
+            )
+        )
+    }
+
     func testPairingProofAndWrappedDeviceKeyRoundTrip() throws {
         let code = try RemoteControlCrypto.makePairingCode()
         let serviceID = UUID()
