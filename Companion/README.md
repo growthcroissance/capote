@@ -37,17 +37,18 @@ limites de reprovisionnement imposées par Apple.
 2. Sur le réseau local, activer « Autoriser le contrôle depuis un iPhone » dans
    Capote macOS, choisir « Jumeler un iPhone… », puis scanner le QR code depuis
    la fiche du Mac dans le compagnon iOS. La saisie manuelle reste possible.
-3. Actualiser l’état du Mac depuis le compagnon : Capote récupère automatiquement
-   sa propre IPv4 depuis l’app Tailscale du Mac et la conserve sur l’iPhone.
+3. Ouvrir le compagnon : son état est actualisé automatiquement et Capote
+   récupère sa propre IPv4 depuis l’app Tailscale du Mac pour la conserver sur
+   l’iPhone.
 4. Si la détection automatique n’est pas disponible, relever dans Tailscale le
    nom MagicDNS complet du Mac, terminé par `.ts.net`, ou son adresse IP, puis
    l’enregistrer via « Configurer l’accès Tailscale… ».
-5. Ouvrir le compagnon et actualiser l’état. Capote prépare immédiatement la
-   connexion locale, puis démarre la connexion Tailscale 250 ms plus tard si
-   nécessaire. La première connexion établie est conservée et l’autre est
-   annulée avant l’envoi d’une unique commande chiffrée. Le Wi-Fi local reste
-   donc prioritaire lorsqu’il répond rapidement, tandis que Tailscale prend le
-   relais si Bonjour est indisponible ou obsolète.
+5. Ouvrir le compagnon. Capote actualise automatiquement l’état et prépare
+   immédiatement la connexion locale, puis démarre la connexion Tailscale 250 ms
+   plus tard si nécessaire. La première connexion établie est conservée et
+   l’autre est annulée avant l’envoi d’une unique commande chiffrée. Le Wi-Fi
+   local reste donc prioritaire lorsqu’il répond rapidement, tandis que Tailscale
+   prend le relais si Bonjour est indisponible ou obsolète.
 
 Pour supprimer un ancien jumelage sur l’iPhone, sélectionner le Mac puis toucher
 « Oublier ce Mac… ». Le balayage de sa ligne vers la gauche reste disponible

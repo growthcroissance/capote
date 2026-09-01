@@ -156,10 +156,10 @@ struct CompanionContentView: View {
             } message: {
                 Text("La clé conservée sur cet iPhone sera supprimée. Un nouveau code affiché par le Mac sera nécessaire pour le jumeler à nouveau.")
             }
-            .onAppear { model.startBrowsing() }
+            .onAppear { model.handleActivation() }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
-                    model.restartBrowsing()
+                    model.handleActivation()
                 }
             }
         }

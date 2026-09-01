@@ -54,6 +54,7 @@ final class CompanionModel: ObservableObject {
     private let keyStore = CompanionKeyStore()
     private var browser: NWBrowser?
     private var activeRequestIdentifier: UUID?
+    private var shouldRefreshWhenSelectedMacIsDiscovered = false
 
     private enum DefaultsKey {
         static let deviceIdentifier = "companion.deviceIdentifier"
@@ -111,6 +112,12 @@ final class CompanionModel: ObservableObject {
                         ?? "Mac avec Capote"
                     return DiscoveredMac(id: identifier, name: displayName, endpoint: endpoint)
                 }.sorted { $0.name < $1.name }
+                if self.shouldRefreshWhenSelectedMacIsDiscovered,
+                   let selectedIdentifier = self.selectedMac?.id,
+                   endpoints.contains(where: { $0.0 == selectedIdentifier }) {
+                    self.shouldRefreshWhenSelectedMacIsDiscovered = false
+                    self.refresh()
+                }
                 if endpoints.isEmpty, self.successfulConnectionLabel == "Réseau local" {
                     self.successfulConnectionLabel = nil
                 }
@@ -147,6 +154,16 @@ final class CompanionModel: ObservableObject {
         browser?.cancel()
         browser = nil
         startBrowsing()
+    }
+
+    func handleActivation() {
+        shouldRefreshWhenSelectedMacIsDiscovered = selectedMac != nil
+        restartBrowsing()
+
+        if selectedMac?.tailscaleHost != nil {
+            shouldRefreshWhenSelectedMacIsDiscovered = false
+            refresh()
+        }
     }
 
     func refresh() {
