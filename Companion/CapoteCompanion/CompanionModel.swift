@@ -33,6 +33,12 @@ struct CompanionTransportResponse {
     let connectionLabel: String
 }
 
+private enum RemoteStatusPresentation: Equatable {
+    case unknown
+    case current
+    case unavailable
+}
+
 @MainActor
 final class CompanionModel: ObservableObject {
     @Published private(set) var discoveredMacs: [DiscoveredMac] = []
@@ -42,6 +48,7 @@ final class CompanionModel: ObservableObject {
     @Published private(set) var message: String?
     @Published private(set) var isConnecting = false
     @Published private(set) var successfulConnectionLabel: String?
+    @Published private var statusPresentation: RemoteStatusPresentation = .unknown
 
     private let browserQueue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-browser")
     private let keyStore = CompanionKeyStore()
@@ -57,6 +64,7 @@ final class CompanionModel: ObservableObject {
     var connectionText: String {
         if isConnecting { return "Connexion…" }
         guard let selectedMac else { return "Aucun Mac" }
+        if statusPresentation == .unavailable { return "Hors ligne" }
         if let successfulConnectionLabel { return successfulConnectionLabel }
         if endpoint(for: selectedMac.id) != nil { return "Réseau local disponible" }
         if selectedMac.tailscaleHost != nil { return "Tailscale configuré" }
@@ -64,6 +72,8 @@ final class CompanionModel: ObservableObject {
     }
 
     var sleepStateText: String {
+        if isConnecting { return "Actualisation…" }
+        if statusPresentation == .unavailable { return "Indisponible" }
         switch status?.isSleepDisabled {
         case true: return "Désactivée"
         case false: return "Autorisée"
@@ -146,6 +156,7 @@ final class CompanionModel: ObservableObject {
     func select(_ mac: PairedMac) {
         selectedMac = mac
         status = nil
+        statusPresentation = .unknown
         successfulConnectionLabel = nil
         persistSelectedMac()
         send(.status)
@@ -234,6 +245,9 @@ final class CompanionModel: ObservableObject {
               let mac = selectedMac,
               let transport = transport(for: mac),
               let key = keyStore.key(for: mac.id) else {
+            status = nil
+            statusPresentation = .unavailable
+            successfulConnectionLabel = nil
             message = "Ce Mac n’est disponible ni localement ni via une adresse Tailscale configurée."
             return
         }
@@ -277,14 +291,19 @@ final class CompanionModel: ObservableObject {
                             throw CompanionError.unexpectedResponse
                         }
                         self.status = response.status
+                        self.statusPresentation = response.status == nil ? .unknown : .current
                         self.adoptTailscaleHost(response.status?.tailscaleHost, for: mac.id)
                         self.successfulConnectionLabel = transportResponse.connectionLabel
                         self.message = response.message
                     } catch CompanionError.remoteRejected {
                         self.status = nil
+                        self.statusPresentation = .unavailable
                         self.successfulConnectionLabel = nil
                         self.message = "Le Mac a refusé cette clé de jumelage. Oubliez ce Mac sur l’iPhone, puis jumelez-le à nouveau avec un nouveau code."
                     } catch {
+                        self.status = nil
+                        self.statusPresentation = .unavailable
+                        self.successfulConnectionLabel = nil
                         self.message = "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
                     }
                 }
@@ -292,6 +311,9 @@ final class CompanionModel: ObservableObject {
         } catch {
             activeRequestIdentifier = nil
             isConnecting = false
+            status = nil
+            statusPresentation = .unavailable
+            successfulConnectionLabel = nil
             message = "Impossible de préparer la commande."
         }
     }
@@ -304,6 +326,7 @@ final class CompanionModel: ObservableObject {
         if selectedMac?.id == mac.id {
             selectedMac = pairedMacs.first
             status = nil
+            statusPresentation = .unknown
             successfulConnectionLabel = nil
             persistSelectedMac()
         }

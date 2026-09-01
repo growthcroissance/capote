@@ -17,6 +17,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
   seule ouverture du socket ;
 - redécouverte Bonjour au retour au premier plan et trajet local explicitement
   limité au Wi-Fi afin de récupérer après la désactivation du VPN Tailscale ;
+- invalidation immédiate de l’ancien état affiché après un échec de connexion,
+  avec indications « Hors ligne » et « Indisponible » dans l’en-tête ;
 - agent macOS désactivé par défaut sur une nouvelle installation, activation
   conservée après redémarrage et réactivation des installations déjà jumelées ;
 - lecture d’état, arrêt d’une session Capote déjà active et révocation des
