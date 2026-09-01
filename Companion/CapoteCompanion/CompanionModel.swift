@@ -87,7 +87,7 @@ final class CompanionModel: ObservableObject {
     func startBrowsing() {
         guard browser == nil else { return }
         let descriptor = NWBrowser.Descriptor.bonjour(type: CapoteRemoteProtocol.bonjourType, domain: nil)
-        let browser = NWBrowser(for: descriptor, using: .tcp)
+        let browser = NWBrowser(for: descriptor, using: CompanionNetworkParameters.localTCP())
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             let endpoints = results.compactMap { result -> (UUID, NWEndpoint)? in
                 guard case .service(let name, _, _, _) = result.endpoint,
@@ -131,6 +131,14 @@ final class CompanionModel: ObservableObject {
         browser.start(queue: browserQueue)
     }
 
+    func restartBrowsing() {
+        browser?.browseResultsChangedHandler = nil
+        browser?.stateUpdateHandler = nil
+        browser?.cancel()
+        browser = nil
+        startBrowsing()
+    }
+
     func refresh() {
         if selectedMac != nil { send(.status) }
     }
@@ -171,7 +179,11 @@ final class CompanionModel: ObservableObject {
                 kind: .pairRequest,
                 payload: try JSONEncoder.capoteRemote.encode(request)
             )
-            SocketCompanionTransport(endpoint: mac.endpoint, connectionLabel: "réseau local").send(wire) {
+            SocketCompanionTransport(
+                endpoint: mac.endpoint,
+                connectionLabel: "réseau local",
+                parameters: CompanionNetworkParameters.localTCP()
+            ).send(wire) {
                 [weak self] result in
                 Task { @MainActor in
                     guard let self, self.activeRequestIdentifier == requestIdentifier else { return }
@@ -349,14 +361,16 @@ final class CompanionModel: ObservableObject {
                    let port = NWEndpoint.Port(rawValue: RemoteDirectAccess.port) {
                     transports.append(SocketCompanionTransport(
                         endpoint: .hostPort(host: NWEndpoint.Host(host), port: port),
-                        connectionLabel: "Tailscale"
+                        connectionLabel: "Tailscale",
+                        parameters: .tcp
                     ))
                 }
             case .localNetwork:
                 if let localEndpoint {
                     transports.append(SocketCompanionTransport(
                         endpoint: localEndpoint,
-                        connectionLabel: "Réseau local"
+                        connectionLabel: "Réseau local",
+                        parameters: CompanionNetworkParameters.localTCP()
                     ))
                 }
             }
@@ -428,9 +442,19 @@ private enum CompanionError: Error {
     case remoteRejected
 }
 
+private enum CompanionNetworkParameters {
+    static func localTCP() -> NWParameters {
+        let parameters = NWParameters.tcp
+        parameters.requiredInterfaceType = .wifi
+        parameters.includePeerToPeer = true
+        return parameters
+    }
+}
+
 private struct SocketCompanionTransport: CompanionTransport {
     let endpoint: NWEndpoint
     let connectionLabel: String
+    let parameters: NWParameters
 
     func send(
         _ wire: RemoteWireMessage,
@@ -438,7 +462,7 @@ private struct SocketCompanionTransport: CompanionTransport {
     ) {
         do {
             let frame = try RemoteFrameCodec.encode(wire)
-            SocketRequestSession(endpoint: endpoint, frame: frame) { result in
+            SocketRequestSession(endpoint: endpoint, parameters: parameters, frame: frame) { result in
                 completion(result.map {
                     CompanionTransportResponse(wire: $0, connectionLabel: connectionLabel)
                 })
@@ -532,8 +556,13 @@ private final class SocketRequestSession {
     private let queue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-request")
     private var completed = false
 
-    init(endpoint: NWEndpoint, frame: Data, completion: @escaping (Result<RemoteWireMessage, Error>) -> Void) {
-        self.connection = NWConnection(to: endpoint, using: .tcp)
+    init(
+        endpoint: NWEndpoint,
+        parameters: NWParameters,
+        frame: Data,
+        completion: @escaping (Result<RemoteWireMessage, Error>) -> Void
+    ) {
+        self.connection = NWConnection(to: endpoint, using: parameters)
         self.frame = frame
         self.completion = completion
     }

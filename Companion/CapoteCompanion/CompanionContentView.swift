@@ -16,6 +16,7 @@ private enum CompanionSheetDestination: Identifiable {
 }
 
 struct CompanionContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var model: CompanionModel
     @State private var presentedSheet: CompanionSheetDestination?
     @State private var showingForgetMacConfirmation = false
@@ -156,6 +157,11 @@ struct CompanionContentView: View {
                 Text("La clé conservée sur cet iPhone sera supprimée. Un nouveau code affiché par le Mac sera nécessaire pour le jumeler à nouveau.")
             }
             .onAppear { model.startBrowsing() }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    model.restartBrowsing()
+                }
+            }
         }
     }
 }

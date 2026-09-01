@@ -15,6 +15,8 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - détection automatique de l’adresse IPv4 Tailscale du Mac et bascule entre
   réseau local et Tailscale fondée sur une réponse complète plutôt que sur la
   seule ouverture du socket ;
+- redécouverte Bonjour au retour au premier plan et trajet local explicitement
+  limité au Wi-Fi afin de récupérer après la désactivation du VPN Tailscale ;
 - agent macOS désactivé par défaut sur une nouvelle installation, activation
   conservée après redémarrage et réactivation des installations déjà jumelées ;
 - lecture d’état, arrêt d’une session Capote déjà active et révocation des
