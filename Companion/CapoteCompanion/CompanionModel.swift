@@ -183,12 +183,16 @@ final class CompanionModel: ObservableObject {
 
         if selectedMac?.tailscaleHost != nil {
             shouldRefreshWhenSelectedMacIsDiscovered = false
-            refresh()
+            refreshAutomatically()
         }
     }
 
     func refresh() {
         if selectedMac != nil { send(.status) }
+    }
+
+    private func refreshAutomatically() {
+        send(.status, requestTimeout: 1.25, automaticRetryCount: 1)
     }
 
     private func refreshWhenLocalBrowsingIsReady() {
@@ -197,7 +201,7 @@ final class CompanionModel: ObservableObject {
               let selectedIdentifier = selectedMac?.id,
               endpoint(for: selectedIdentifier) != nil else { return }
         shouldRefreshWhenSelectedMacIsDiscovered = false
-        refresh()
+        refreshAutomatically()
     }
 
     func select(_ mac: PairedMac) {
@@ -290,6 +294,14 @@ final class CompanionModel: ObservableObject {
     }
 
     func send(_ action: RemoteCommandAction) {
+        send(action, requestTimeout: 5, automaticRetryCount: 0)
+    }
+
+    private func send(
+        _ action: RemoteCommandAction,
+        requestTimeout: TimeInterval,
+        automaticRetryCount: Int
+    ) {
         guard !isConnecting else { return }
         guard let mac = selectedMac,
               let key = keyStore.key(for: mac.id) else {
@@ -300,7 +312,7 @@ final class CompanionModel: ObservableObject {
             message = "La clé de jumelage de ce Mac n’est plus disponible."
             return
         }
-        guard let transport = transport(for: mac) else {
+        guard let transport = transport(for: mac, requestTimeout: requestTimeout) else {
             preserveCachedStatusAfterFailure(
                 "Ce Mac n’est disponible ni localement ni via une adresse Tailscale configurée."
             )
@@ -366,9 +378,17 @@ final class CompanionModel: ObservableObject {
                         self.clearCachedStatus(for: mac.id)
                         self.message = "Le Mac a refusé cette clé de jumelage. Oubliez ce Mac sur l’iPhone, puis jumelez-le à nouveau avec un nouveau code."
                     } catch {
-                        self.preserveCachedStatusAfterFailure(
-                            "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
-                        )
+                        if automaticRetryCount > 0 {
+                            self.send(
+                                action,
+                                requestTimeout: 5,
+                                automaticRetryCount: automaticRetryCount - 1
+                            )
+                        } else {
+                            self.preserveCachedStatusAfterFailure(
+                                "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
+                            )
+                        }
                     }
                 }
             }
@@ -435,7 +455,7 @@ final class CompanionModel: ObservableObject {
         discoveredMacs.first { $0.id == identifier }?.endpoint
     }
 
-    private func transport(for mac: PairedMac) -> CompanionTransport? {
+    private func transport(for mac: PairedMac, requestTimeout: TimeInterval = 5) -> CompanionTransport? {
         var transports: [SocketCompanionTransport] = []
         let localEndpoint = endpoint(for: mac.id)
         for route in RemoteDirectAccess.preferredRoutes(
@@ -449,7 +469,8 @@ final class CompanionModel: ObservableObject {
                     transports.append(SocketCompanionTransport(
                         endpoint: .hostPort(host: NWEndpoint.Host(host), port: port),
                         connectionLabel: "Tailscale",
-                        parameters: .tcp
+                        parameters: .tcp,
+                        requestTimeout: requestTimeout
                     ))
                 }
             case .localNetwork:
@@ -457,7 +478,8 @@ final class CompanionModel: ObservableObject {
                     transports.append(SocketCompanionTransport(
                         endpoint: localEndpoint,
                         connectionLabel: "Réseau local",
-                        parameters: CompanionNetworkParameters.localTCP()
+                        parameters: CompanionNetworkParameters.localTCP(),
+                        requestTimeout: requestTimeout
                     ))
                 }
             }
@@ -577,6 +599,19 @@ private struct SocketCompanionTransport: CompanionTransport {
     let endpoint: NWEndpoint
     let connectionLabel: String
     let parameters: NWParameters
+    let requestTimeout: TimeInterval
+
+    init(
+        endpoint: NWEndpoint,
+        connectionLabel: String,
+        parameters: NWParameters,
+        requestTimeout: TimeInterval = 5
+    ) {
+        self.endpoint = endpoint
+        self.connectionLabel = connectionLabel
+        self.parameters = parameters
+        self.requestTimeout = requestTimeout
+    }
 
     func send(
         _ wire: RemoteWireMessage,
@@ -584,7 +619,12 @@ private struct SocketCompanionTransport: CompanionTransport {
     ) {
         do {
             let frame = try RemoteFrameCodec.encode(wire)
-            SocketRequestSession(endpoint: endpoint, parameters: parameters, frame: frame) { result in
+            SocketRequestSession(
+                endpoint: endpoint,
+                parameters: parameters,
+                frame: frame,
+                timeout: requestTimeout
+            ) { result in
                 completion(result.map {
                     CompanionTransportResponse(wire: $0, connectionLabel: connectionLabel)
                 })
@@ -674,6 +714,7 @@ private final class FirstSuccessfulCompanionTransportSession {
 private final class SocketRequestSession {
     private let connection: NWConnection
     private let frame: Data
+    private let timeout: TimeInterval
     private let completion: (Result<RemoteWireMessage, Error>) -> Void
     private let queue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-request")
     private var completed = false
@@ -682,10 +723,12 @@ private final class SocketRequestSession {
         endpoint: NWEndpoint,
         parameters: NWParameters,
         frame: Data,
+        timeout: TimeInterval,
         completion: @escaping (Result<RemoteWireMessage, Error>) -> Void
     ) {
         self.connection = NWConnection(to: endpoint, using: parameters)
         self.frame = frame
+        self.timeout = timeout
         self.completion = completion
     }
 
@@ -705,7 +748,7 @@ private final class SocketRequestSession {
             }
         }
         connection.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + 5) { [weak self] in
+        queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
             self?.finish(.failure(CompanionError.unexpectedResponse))
         }
     }
