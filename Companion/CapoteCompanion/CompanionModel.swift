@@ -180,6 +180,9 @@ final class CompanionModel: ObservableObject {
                     do {
                         let transportResponse = try result.get()
                         let responseWire = transportResponse.wire
+                        if responseWire.kind == .error {
+                            throw CompanionError.pairingRejected
+                        }
                         guard responseWire.kind == .pairResponse else { throw CompanionError.unexpectedResponse }
                         let response = try JSONDecoder.capoteRemote.decode(PairResponse.self, from: responseWire.payload)
                         guard response.accepted,
@@ -197,8 +200,11 @@ final class CompanionModel: ObservableObject {
                         self.successfulConnectionLabel = "Réseau local"
                         self.message = response.message
                         completion(true)
+                    } catch CompanionError.pairingRejected {
+                        self.message = "Jumelage refusé. Créez un nouveau code sur le Mac, puis scannez son QR code."
+                        completion(false)
                     } catch {
-                        self.message = "Jumelage refusé. Vérifiez le code affiché sur le Mac."
+                        self.message = "Impossible de joindre le Mac pour le jumelage. Vérifiez que les deux appareils sont sur le même réseau local et que Capote est ouverte."
                         completion(false)
                     }
                 }
@@ -259,6 +265,7 @@ final class CompanionModel: ObservableObject {
                             throw CompanionError.unexpectedResponse
                         }
                         self.status = response.status
+                        self.adoptTailscaleHost(response.status?.tailscaleHost, for: mac.id)
                         self.successfulConnectionLabel = transportResponse.connectionLabel
                         self.message = response.message
                     } catch CompanionError.remoteRejected {
@@ -381,6 +388,21 @@ final class CompanionModel: ObservableObject {
         )
     }
 
+    private func adoptTailscaleHost(_ value: String?, for identifier: UUID) {
+        guard let value,
+              let normalized = RemoteDirectAccess.normalizedTailscaleHost(value),
+              let index = pairedMacs.firstIndex(where: { $0.id == identifier }),
+              pairedMacs[index].tailscaleHost != normalized else {
+            return
+        }
+
+        pairedMacs[index].tailscaleHost = normalized
+        if selectedMac?.id == identifier {
+            selectedMac = pairedMacs[index]
+        }
+        savePairedMacs()
+    }
+
     private func persistSelectedMac() {
         let defaults = UserDefaults.standard
         if let selectedMac {
@@ -438,142 +460,67 @@ private struct AdaptiveCompanionTransport: CompanionTransport {
         _ wire: RemoteWireMessage,
         completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
     ) {
-        do {
-            let frame = try RemoteFrameCodec.encode(wire)
-            FirstReadySocketRequestSession(
-                transports: transports,
-                frame: frame,
-                completion: completion
-            ).start()
-        } catch {
-            completion(.failure(error))
-        }
+        FirstSuccessfulCompanionTransportSession(
+            transports: transports,
+            wire: wire,
+            completion: completion
+        ).start()
     }
 }
 
-private final class FirstReadySocketRequestSession {
+private final class FirstSuccessfulCompanionTransportSession {
     private let transports: [SocketCompanionTransport]
-    private let frame: Data
+    private let wire: RemoteWireMessage
     private let completion: (Result<CompanionTransportResponse, Error>) -> Void
     private let queue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-adaptive-transport")
-    private var connections: [NWConnection] = []
-    private var selectedConnection: NWConnection?
     private var completed = false
-    private var failureCount = 0
-    private var lastError: Error?
+    private var resultCount = 0
+    private var fallbackResult: Result<CompanionTransportResponse, Error>?
 
     init(
         transports: [SocketCompanionTransport],
-        frame: Data,
+        wire: RemoteWireMessage,
         completion: @escaping (Result<CompanionTransportResponse, Error>) -> Void
     ) {
         self.transports = transports
-        self.frame = frame
+        self.wire = wire
         self.completion = completion
     }
 
     func start() {
         for (index, transport) in transports.enumerated() {
             queue.asyncAfter(deadline: .now() + .milliseconds(index * 250)) { [self] in
-                startConnection(for: transport)
-            }
-        }
-        queue.asyncAfter(deadline: .now() + 5) { [self] in
-            finish(.failure(lastError ?? CompanionError.unexpectedResponse))
-        }
-    }
-
-    private func startConnection(for transport: SocketCompanionTransport) {
-        guard !completed, selectedConnection == nil else { return }
-
-        let connection = NWConnection(to: transport.endpoint, using: .tcp)
-        connections.append(connection)
-        connection.stateUpdateHandler = { [self] state in
-            switch state {
-            case .ready:
-                select(connection, label: transport.connectionLabel)
-            case .failed(let error):
-                connectionFailed(connection, error: error)
-            case .cancelled:
-                if selectedConnection == nil {
-                    connectionFailed(connection, error: CompanionError.unexpectedResponse)
-                }
-            default:
-                break
-            }
-        }
-        connection.start(queue: queue)
-    }
-
-    private func select(_ connection: NWConnection, label: String) {
-        guard !completed, selectedConnection == nil else { return }
-        selectedConnection = connection
-
-        for candidate in connections where candidate !== connection {
-            candidate.stateUpdateHandler = nil
-            candidate.cancel()
-        }
-        connections = [connection]
-
-        connection.send(content: frame, completion: .contentProcessed { [self] error in
-            if let error {
-                finish(.failure(error))
-            } else {
-                receiveHeader(on: connection, label: label)
-            }
-        })
-    }
-
-    private func connectionFailed(_ connection: NWConnection, error: Error) {
-        guard !completed, selectedConnection == nil else { return }
-        connection.stateUpdateHandler = nil
-        connection.cancel()
-        connections.removeAll { $0 === connection }
-        failureCount += 1
-        lastError = error
-        if failureCount == transports.count {
-            finish(.failure(error))
-        }
-    }
-
-    private func receiveHeader(on connection: NWConnection, label: String) {
-        connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [self] data, _, _, error in
-            guard error == nil, let header = data, header.count == 4 else {
-                finish(.failure(error ?? CompanionError.unexpectedResponse))
-                return
-            }
-            let length = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
-            guard length > 0, length <= CapoteRemoteProtocol.maximumFrameSize else {
-                finish(.failure(CompanionError.unexpectedResponse))
-                return
-            }
-            connection.receive(minimumIncompleteLength: Int(length), maximumLength: Int(length)) {
-                [self] data, _, _, error in
-                do {
-                    guard error == nil, let data, data.count == Int(length) else {
-                        throw error ?? CompanionError.unexpectedResponse
+                guard !completed else { return }
+                transport.send(wire) { [self] result in
+                    queue.async { [self] in
+                        receive(result)
                     }
-                    let wire = try RemoteFrameCodec.decode(header + data)
-                    finish(.success(CompanionTransportResponse(
-                        wire: wire,
-                        connectionLabel: label
-                    )))
-                } catch {
-                    finish(.failure(error))
                 }
             }
+        }
+        queue.asyncAfter(deadline: .now() + 6) { [self] in
+            finish(fallbackResult ?? .failure(CompanionError.unexpectedResponse))
+        }
+    }
+
+    private func receive(_ result: Result<CompanionTransportResponse, Error>) {
+        guard !completed else { return }
+        resultCount += 1
+
+        if case .success(let response) = result, response.wire.kind != .error {
+            finish(result)
+            return
+        }
+
+        fallbackResult = result
+        if resultCount == transports.count {
+            finish(result)
         }
     }
 
     private func finish(_ result: Result<CompanionTransportResponse, Error>) {
         guard !completed else { return }
         completed = true
-        for connection in connections {
-            connection.stateUpdateHandler = nil
-            connection.cancel()
-        }
-        connections.removeAll()
-        selectedConnection = nil
         completion(result)
     }
 }

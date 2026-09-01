@@ -45,6 +45,16 @@ public enum RemoteDirectAccess {
         return host
     }
 
+    public static func firstTailscaleIPv4(in output: String) -> String? {
+        for token in output.split(whereSeparator: { $0.isWhitespace }) {
+            let candidate = String(token)
+            if let address = IPv4Address(candidate), isTailscaleIPv4(address) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
     private static func isTailscaleIPv4(_ address: IPv4Address) -> Bool {
         let bytes = [UInt8](address.rawValue)
         return bytes.count == 4 && bytes[0] == 100 && (64...127).contains(bytes[1])

@@ -23,9 +23,10 @@ struct ManualTestRunner {
         testRemoteTamperRejection()
         testRemoteExpiredCommandRejection()
         testTailscaleAddressValidation()
+        testTailscaleCLIOutputParsing()
         testTailscaleRoutePreference()
         testCompanionSelectionFallback()
-        print("21 tests réussis")
+        print("22 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -352,6 +353,14 @@ struct ManualTestRunner {
                 && RemoteDirectAccess.normalizedTailscaleHost("192.168.1.10") == nil
                 && RemoteDirectAccess.normalizedTailscaleHost("100.128.0.1") == nil,
             "adresse hors Tailscale rejetée"
+        )
+    }
+
+    private static func testTailscaleCLIOutputParsing() {
+        expect(
+            RemoteDirectAccess.firstTailscaleIPv4(in: "100.99.88.77\n") == "100.99.88.77"
+                && RemoteDirectAccess.firstTailscaleIPv4(in: "192.168.1.4\n") == nil,
+            "adresse Tailscale extraite de la sortie CLI"
         )
     }
 

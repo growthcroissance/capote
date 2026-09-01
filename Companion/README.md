@@ -2,7 +2,9 @@
 
 Le compagnon découvre et jumelle d’abord Capote avec Bonjour sur le même réseau
 local. Le jumelage utilise un code aléatoire de 96 bits affiché une seule fois
-par le Mac. Une clé distincte est ensuite conservée dans le Trousseau de chaque
+par le Mac. Le compagnon peut scanner le QR code correspondant avec l’appareil
+photo de l’iPhone ; la saisie manuelle du code reste disponible. Une clé
+distincte est ensuite conservée dans le Trousseau de chaque
 appareil ; les commandes et réponses sont chiffrées avec ChaCha20-Poly1305.
 
 Une fois jumelé, le compagnon peut aussi joindre le Mac à travers le réseau
@@ -33,11 +35,13 @@ limites de reprovisionnement imposées par Apple.
 1. Installer Tailscale sur le Mac et l’iPhone et connecter les deux appareils au
    même tailnet personnel.
 2. Sur le réseau local, activer « Autoriser le contrôle depuis un iPhone » dans
-   Capote macOS et effectuer le jumelage Bonjour normal.
-3. Dans Tailscale, relever soit le nom MagicDNS complet du Mac, terminé par
-   `.ts.net`, soit son adresse IP Tailscale.
-4. Dans le compagnon, sélectionner le Mac, ouvrir « Configurer l’accès
-   Tailscale… » et enregistrer cette destination.
+   Capote macOS, choisir « Jumeler un iPhone… », puis scanner le QR code depuis
+   la fiche du Mac dans le compagnon iOS. La saisie manuelle reste possible.
+3. Actualiser l’état du Mac depuis le compagnon : Capote récupère automatiquement
+   sa propre IPv4 depuis l’app Tailscale du Mac et la conserve sur l’iPhone.
+4. Si la détection automatique n’est pas disponible, relever dans Tailscale le
+   nom MagicDNS complet du Mac, terminé par `.ts.net`, ou son adresse IP, puis
+   l’enregistrer via « Configurer l’accès Tailscale… ».
 5. Ouvrir le compagnon et actualiser l’état. Capote prépare immédiatement la
    connexion locale, puis démarre la connexion Tailscale 250 ms plus tard si
    nécessaire. La première connexion établie est conservée et l’autre est

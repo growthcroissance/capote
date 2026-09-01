@@ -85,6 +85,13 @@ final class MacRemoteAgent: @unchecked Sendable {
         return code
     }
 
+    func cancelPairing() {
+        queue.sync {
+            pairingCode = nil
+            pairingAttempts = 0
+        }
+    }
+
     private func accept(_ connection: NWConnection) {
         connection.stateUpdateHandler = { [weak self, weak connection] state in
             guard let self, let connection else { return }

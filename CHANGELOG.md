@@ -9,8 +9,16 @@ Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - prototype de compagnon iOS limité au réseau local avec découverte Bonjour ;
 - jumelage à code unique de 96 bits, clés par appareil dans le Trousseau,
   chiffrement ChaCha20-Poly1305 et protection anti-rejeu ;
-- agent macOS désactivé par défaut, lecture d’état, arrêt d’une session Capote
-  déjà active et révocation des iPhone ;
+- affichage au premier plan du code de jumelage en QR sur le Mac et scanner
+  QR/texte intégré au compagnon iPhone, avec saisie manuelle conservée en
+  secours ;
+- détection automatique de l’adresse IPv4 Tailscale du Mac et bascule entre
+  réseau local et Tailscale fondée sur une réponse complète plutôt que sur la
+  seule ouverture du socket ;
+- agent macOS désactivé par défaut sur une nouvelle installation, activation
+  conservée après redémarrage et réactivation des installations déjà jumelées ;
+- lecture d’état, arrêt d’une session Capote déjà active et révocation des
+  iPhone ;
 - exclusion explicite du démarrage distant et de tout daemon root tant que
   Capote reste distribuée avec une signature ad hoc.
 

@@ -23,6 +23,37 @@ final class RemoteControlCoreTests: XCTestCase {
         XCTAssertNil(RemoteDirectAccess.normalizedTailscaleHost("-mac.perso.ts.net"))
     }
 
+    func testTailscaleIPv4IsExtractedFromCLIOutput() {
+        XCTAssertEqual(
+            RemoteDirectAccess.firstTailscaleIPv4(in: "100.99.88.77\n"),
+            "100.99.88.77"
+        )
+        XCTAssertEqual(
+            RemoteDirectAccess.firstTailscaleIPv4(in: "warning\n100.64.0.1 extra"),
+            "100.64.0.1"
+        )
+        XCTAssertNil(RemoteDirectAccess.firstTailscaleIPv4(in: "192.168.1.4\nexample.com"))
+    }
+
+    func testLegacyRemoteStatusDecodesWithoutTailscaleHost() throws {
+        let legacyJSON = Data(
+            """
+            {
+              "isSleepDisabled": false,
+              "canRestoreActiveSession": false,
+              "activeSessionDescription": null,
+              "sessionEndDate": null,
+              "thermalSafetyTriggered": false
+            }
+            """.utf8
+        )
+
+        let status = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: legacyJSON)
+        XCTAssertEqual(status.isSleepDisabled, false)
+        XCTAssertFalse(status.canRestoreActiveSession)
+        XCTAssertNil(status.tailscaleHost)
+    }
+
     func testLocalRouteIsPreferredWhenAvailable() {
         XCTAssertEqual(
             RemoteDirectAccess.preferredRoutes(hasTailscaleHost: true, hasLocalEndpoint: true),

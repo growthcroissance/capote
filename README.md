@@ -175,8 +175,11 @@ directement le panneau correspondant de Réglages Système.
 Le prototype iOS se trouve dans `Companion/CapoteCompanion.xcodeproj`. Capote
 n’ouvre le contrôle réseau qu’après activation explicite de l’option dans son
 menu. Le jumelage utilise un code aléatoire de 96 bits à usage unique ; une clé
-distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Les
-commandes ont une validité de 30 secondes, sont protégées contre le rejeu et
+distincte est ensuite conservée dans le Trousseau du Mac et de l’iPhone. Le Mac
+affiche aussi ce code sous forme de QR : le compagnon peut le scanner avec
+l’appareil photo de l’iPhone, tout en conservant la saisie manuelle comme
+solution de secours. Les commandes ont une validité de 30 secondes, sont
+protégées contre le rejeu et
 sont chiffrées avec ChaCha20-Poly1305.
 
 Après ce jumelage local, l’utilisateur peut enregistrer dans le compagnon le

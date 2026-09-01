@@ -14,6 +14,7 @@ final class RemoteControlController: ObservableObject {
 
     private enum DefaultsKey {
         static let serviceIdentifier = "remoteControl.serviceIdentifier"
+        static let isEnabled = "remoteControl.isEnabled"
     }
 
     private let keyStore = RemoteDeviceKeyStore()
@@ -21,9 +22,18 @@ final class RemoteControlController: ObservableObject {
 
     private init() {
         pairedDevices = keyStore.devices()
+        let persisted = UserDefaults.standard.object(forKey: DefaultsKey.isEnabled) as? Bool
+        let shouldStart = persisted ?? !pairedDevices.isEmpty
+        if shouldStart {
+            UserDefaults.standard.set(true, forKey: DefaultsKey.isEnabled)
+            Task { @MainActor [weak self] in
+                self?.start()
+            }
+        }
     }
 
     func setEnabled(_ enabled: Bool) {
+        UserDefaults.standard.set(enabled, forKey: DefaultsKey.isEnabled)
         if enabled {
             start()
         } else {
@@ -35,13 +45,14 @@ final class RemoteControlController: ObservableObject {
         guard isEnabled, let agent else { return }
         do {
             pairingCode = try agent.beginPairing()
-            statusText = "Saisissez ce code dans Capote pour iPhone. Il ne fonctionne qu’une fois."
+            statusText = "Scannez le QR code dans Capote pour iPhone, ou saisissez le code. Il ne fonctionne qu’une fois."
         } catch {
             statusText = "Impossible de créer le code de jumelage."
         }
     }
 
     func cancelPairing() {
+        agent?.cancelPairing()
         pairingCode = nil
         statusText = "Contrôle iPhone disponible localement et via Tailscale."
     }
@@ -142,7 +153,56 @@ final class RemoteControlController: ObservableObject {
             isSleepDisabled: controller.isSleepDisabled,
             canRestoreActiveSession: controller.hasCancellableSession,
             activeSessionDescription: controller.activeSessionDescription,
-            sessionEndDate: controller.sessionEndDate
+            sessionEndDate: controller.sessionEndDate,
+            tailscaleHost: TailscaleAddressResolver.currentIPv4()
         )
+    }
+}
+
+private enum TailscaleAddressResolver {
+    private static let executablePaths = [
+        "/Applications/Tailscale.app/Contents/MacOS/Tailscale",
+        "/usr/local/bin/tailscale"
+    ]
+
+    static func currentIPv4() -> String? {
+        for path in executablePaths where FileManager.default.isExecutableFile(atPath: path) {
+            if let address = runCLI(at: path) {
+                return address
+            }
+        }
+        return nil
+    }
+
+    private static func runCLI(at path: String) -> String? {
+        let process = Process()
+        let output = Pipe()
+        let completion = DispatchSemaphore(value: 0)
+
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = ["ip", "-4"]
+        process.environment = ProcessInfo.processInfo.environment.merging(
+            ["TAILSCALE_BE_CLI": "1"],
+            uniquingKeysWith: { _, override in override }
+        )
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        process.terminationHandler = { _ in completion.signal() }
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+
+        guard completion.wait(timeout: .now() + 2) == .success else {
+            process.terminate()
+            return nil
+        }
+        guard process.terminationStatus == 0 else { return nil }
+
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        guard let value = String(data: data, encoding: .utf8) else { return nil }
+        return RemoteDirectAccess.firstTailscaleIPv4(in: value)
     }
 }

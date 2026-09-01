@@ -90,19 +90,22 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
     public let activeSessionDescription: String?
     public let sessionEndDate: Date?
     public let thermalSafetyTriggered: Bool
+    public let tailscaleHost: String?
 
     public init(
         isSleepDisabled: Bool?,
         canRestoreActiveSession: Bool,
         activeSessionDescription: String?,
         sessionEndDate: Date?,
-        thermalSafetyTriggered: Bool = false
+        thermalSafetyTriggered: Bool = false,
+        tailscaleHost: String? = nil
     ) {
         self.isSleepDisabled = isSleepDisabled
         self.canRestoreActiveSession = canRestoreActiveSession
         self.activeSessionDescription = activeSessionDescription
         self.sessionEndDate = sessionEndDate
         self.thermalSafetyTriggered = thermalSafetyTriggered
+        self.tailscaleHost = tailscaleHost
     }
 }
 

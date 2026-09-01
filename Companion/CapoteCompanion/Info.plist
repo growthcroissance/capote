@@ -28,6 +28,8 @@
     </array>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Capote recherche uniquement vos Mac jumelés sur le réseau local.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Capote utilise l’appareil photo uniquement pour scanner le QR code de jumelage affiché par votre Mac.</string>
     <key>UILaunchScreen</key>
     <dict/>
     <key>UISupportedInterfaceOrientations</key>

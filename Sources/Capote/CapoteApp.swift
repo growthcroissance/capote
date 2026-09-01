@@ -1,4 +1,6 @@
 import AppKit
+import CoreImage
+import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 private enum CapoteBranding {
@@ -47,6 +49,11 @@ struct CapoteApp: App {
                 systemImage: controller.isSleepDisabled == true ? "eye.fill" : "moon.zzz"
             )
         }
+
+        Window("Jumeler un iPhone", id: "iphone-pairing") {
+            PairingCodeView(remoteControlController: remoteControlController)
+        }
+        .windowResizability(.contentSize)
     }
 }
 
@@ -62,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 private struct MenuContent: View {
+    @Environment(\.openWindow) private var openWindow
     @ObservedObject var controller: SleepControlController
     @ObservedObject var launchAtLoginController: LaunchAtLoginController
     @ObservedObject var remoteControlController: RemoteControlController
@@ -196,12 +204,16 @@ private struct MenuContent: View {
         if remoteControlController.isEnabled {
             if let pairingCode = remoteControlController.pairingCode {
                 Text(pairingCode)
+                Button("Afficher le QR code…") {
+                    showPairingWindow()
+                }
                 Button("Annuler le jumelage") {
                     remoteControlController.cancelPairing()
                 }
             } else {
                 Button("Jumeler un iPhone…") {
                     remoteControlController.startPairing()
+                    showPairingWindow()
                 }
             }
 
@@ -251,5 +263,79 @@ private struct MenuContent: View {
         }
         .keyboardShortcut("q")
         .disabled(controller.isBusy)
+    }
+
+    private func showPairingWindow() {
+        openWindow(id: "iphone-pairing")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NSApp.activate(ignoringOtherApps: true)
+            (NSApp.windows.first { $0.title == "Jumeler un iPhone" })?
+                .makeKeyAndOrderFront(nil)
+        }
+    }
+}
+
+private struct PairingCodeView: View {
+    @ObservedObject var remoteControlController: RemoteControlController
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "iphone.gen3.radiowaves.left.and.right")
+                .font(.system(size: 34))
+                .foregroundStyle(.tint)
+
+            Text("Jumeler un iPhone")
+                .font(.title2.bold())
+
+            if let code = remoteControlController.pairingCode,
+               let image = PairingQRCode.image(for: code) {
+                Image(nsImage: image)
+                    .interpolation(.none)
+                    .resizable()
+                    .frame(width: 220, height: 220)
+                    .accessibilityLabel("QR code de jumelage")
+
+                Text("Scannez ce QR code depuis Capote sur l’iPhone.")
+                    .multilineTextAlignment(.center)
+
+                Text(code)
+                    .font(.system(.body, design: .monospaced).weight(.semibold))
+                    .textSelection(.enabled)
+
+                Text("Ce code est à usage unique. Ne le partagez pas.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Button("Annuler le jumelage", role: .cancel) {
+                    remoteControlController.cancelPairing()
+                }
+            } else {
+                Text(remoteControlController.statusText)
+                    .foregroundStyle(.secondary)
+
+                Button("Créer un nouveau code") {
+                    remoteControlController.startPairing()
+                }
+                .disabled(!remoteControlController.isEnabled)
+            }
+        }
+        .padding(28)
+        .frame(width: 360)
+    }
+}
+
+private enum PairingQRCode {
+    private static let context = CIContext()
+
+    static func image(for code: String) -> NSImage? {
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data("capote-pair:\(code)".utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage,
+              let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return nil
+        }
+        return NSImage(cgImage: cgImage, size: NSSize(width: 220, height: 220))
     }
 }

@@ -1,5 +1,7 @@
 import SwiftUI
 import CapoteRemoteCore
+import Vision
+import VisionKit
 
 private enum CompanionSheetDestination: Identifiable {
     case pairing(DiscoveredMac)
@@ -163,6 +165,8 @@ private struct PairingSheet: View {
     @ObservedObject var model: CompanionModel
     let mac: DiscoveredMac
     @State private var pairingCode = ""
+    @State private var isShowingScanner = false
+    @State private var scannerMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -172,6 +176,21 @@ private struct PairingSheet: View {
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
                         .font(.system(.body, design: .monospaced))
+
+                    if DataScannerViewController.isSupported {
+                        Button {
+                            scannerMessage = nil
+                            isShowingScanner = true
+                        } label: {
+                            Label("Scanner le QR code", systemImage: "qrcode.viewfinder")
+                        }
+                    }
+
+                    if let scannerMessage {
+                        Text(scannerMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 Section {
@@ -180,6 +199,29 @@ private struct PairingSheet: View {
                 }
             }
             .navigationTitle(mac.name)
+            .sheet(isPresented: $isShowingScanner) {
+                NavigationStack {
+                    PairingCodeScannerView(
+                        onCode: { scannedCode in
+                            pairingCode = scannedCode
+                            isShowingScanner = false
+                            submit(code: scannedCode)
+                        },
+                        onError: { message in
+                            scannerMessage = message
+                            isShowingScanner = false
+                        }
+                    )
+                    .ignoresSafeArea(edges: .bottom)
+                    .navigationTitle("Scanner le Mac")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Annuler") { isShowingScanner = false }
+                        }
+                    }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") {
@@ -189,13 +231,132 @@ private struct PairingSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Jumeler") {
-                        model.pair(mac, code: pairingCode) { success in
-                            if success { dismiss() }
-                        }
+                        submit(code: pairingCode)
                     }
                     .disabled(pairingCode.filter(\.isHexDigit).count != 24)
                 }
             }
+        }
+    }
+
+    private func submit(code: String) {
+        model.pair(mac, code: code) { success in
+            if success { dismiss() }
+        }
+    }
+}
+
+private struct PairingCodeScannerView: UIViewControllerRepresentable {
+    let onCode: (String) -> Void
+    let onError: (String) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onCode: onCode, onError: onError)
+    }
+
+    func makeUIViewController(context: Context) -> DataScannerViewController {
+        let scanner = DataScannerViewController(
+            recognizedDataTypes: [
+                .barcode(symbologies: [.qr]),
+                .text(languages: ["fr-FR", "en-US"])
+            ],
+            qualityLevel: .balanced,
+            recognizesMultipleItems: true,
+            isHighFrameRateTrackingEnabled: false,
+            isPinchToZoomEnabled: true,
+            isGuidanceEnabled: true,
+            isHighlightingEnabled: true
+        )
+        scanner.delegate = context.coordinator
+        context.coordinator.scanner = scanner
+        DispatchQueue.main.async {
+            context.coordinator.start()
+        }
+        return scanner
+    }
+
+    func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {}
+
+    static func dismantleUIViewController(_ uiViewController: DataScannerViewController, coordinator: Coordinator) {
+        uiViewController.stopScanning()
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, DataScannerViewControllerDelegate {
+        weak var scanner: DataScannerViewController?
+        private let onCode: (String) -> Void
+        private let onError: (String) -> Void
+        private var hasCompleted = false
+
+        init(onCode: @escaping (String) -> Void, onError: @escaping (String) -> Void) {
+            self.onCode = onCode
+            self.onError = onError
+        }
+
+        func start() {
+            do {
+                try scanner?.startScanning()
+            } catch {
+                finish(withError: "La caméra n’est pas disponible. Vous pouvez toujours saisir le code.")
+            }
+        }
+
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didAdd addedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
+            inspect(addedItems)
+        }
+
+        func dataScanner(_ dataScanner: DataScannerViewController, didTapOn item: RecognizedItem) {
+            inspect([item])
+        }
+
+        private func inspect(_ items: [RecognizedItem]) {
+            guard !hasCompleted else { return }
+            for item in items {
+                let scannedValue: String?
+                switch item {
+                case .barcode(let barcode):
+                    scannedValue = barcode.payloadStringValue
+                case .text(let text):
+                    scannedValue = text.transcript
+                @unknown default:
+                    scannedValue = nil
+                }
+
+                if let scannedValue, let code = Self.pairingCode(from: scannedValue) {
+                    hasCompleted = true
+                    scanner?.stopScanning()
+                    onCode(code)
+                    return
+                }
+            }
+        }
+
+        private func finish(withError message: String) {
+            guard !hasCompleted else { return }
+            hasCompleted = true
+            scanner?.stopScanning()
+            onError(message)
+        }
+
+        private static func pairingCode(from scannedValue: String) -> String? {
+            let candidate: String
+            if scannedValue.lowercased().hasPrefix("capote-pair:") {
+                candidate = String(scannedValue.dropFirst("capote-pair:".count))
+            } else {
+                candidate = scannedValue
+            }
+
+            let hex = candidate.uppercased().filter(\.isHexDigit)
+            guard hex.count == 24 else { return nil }
+            return stride(from: 0, to: hex.count, by: 4).map { offset in
+                let start = hex.index(hex.startIndex, offsetBy: offset)
+                let end = hex.index(start, offsetBy: 4)
+                return String(hex[start..<end])
+            }.joined(separator: "-")
         }
     }
 }
@@ -224,8 +385,16 @@ private struct TailscaleConfigurationSheet: View {
                 }
 
                 Section {
-                    Text("Utilisez le nom MagicDNS complet en .ts.net ou l’adresse IP Tailscale du Mac. Capote écoute le port \(RemoteDirectAccess.port). N’activez ni Funnel, ni Serve, ni redirection de port sur votre box.")
+                    Text("Capote récupère automatiquement l’adresse Tailscale du Mac lorsqu’il est joignable sur le réseau local. Vous pouvez aussi saisir son nom MagicDNS complet en .ts.net ou son adresse IP Tailscale. Capote écoute le port \(RemoteDirectAccess.port). N’activez ni Funnel, ni Serve, ni redirection de port sur votre box.")
                         .font(.footnote)
+                }
+
+                Section {
+                    Button("Détecter depuis le Mac") {
+                        model.send(.status)
+                        dismiss()
+                    }
+                    .disabled(model.isConnecting)
                 }
 
                 if mac.tailscaleHost != nil {
