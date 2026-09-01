@@ -35,8 +35,15 @@ struct CompanionTransportResponse {
 
 private enum RemoteStatusPresentation: Equatable {
     case unknown
+    case cached
     case current
     case unavailable
+}
+
+private struct CachedRemoteStatus: Codable {
+    let macIdentifier: UUID
+    let status: RemoteMacStatus
+    let updatedAt: Date
 }
 
 @MainActor
@@ -48,6 +55,7 @@ final class CompanionModel: ObservableObject {
     @Published private(set) var message: String?
     @Published private(set) var isConnecting = false
     @Published private(set) var successfulConnectionLabel: String?
+    @Published private(set) var lastStatusUpdate: Date?
     @Published private var statusPresentation: RemoteStatusPresentation = .unknown
 
     private let browserQueue = DispatchQueue(label: "fr.benjaminfarrudja.capote.companion-browser")
@@ -55,18 +63,21 @@ final class CompanionModel: ObservableObject {
     private var browser: NWBrowser?
     private var activeRequestIdentifier: UUID?
     private var shouldRefreshWhenSelectedMacIsDiscovered = false
-    private var automaticRefreshTask: Task<Void, Never>?
+    private var browserGeneration = UUID()
+    private var isBrowserReady = false
 
     private enum DefaultsKey {
         static let deviceIdentifier = "companion.deviceIdentifier"
         static let pairedMacs = "companion.pairedMacs"
         static let selectedMac = "companion.selectedMac"
+        static let cachedStatus = "companion.cachedStatus"
     }
 
     var connectionText: String {
         if isConnecting { return "Connexion…" }
         guard let selectedMac else { return "Aucun Mac" }
         if statusPresentation == .unavailable { return "Hors ligne" }
+        if statusPresentation == .cached { return "Dernier état" }
         if let successfulConnectionLabel { return successfulConnectionLabel }
         if endpoint(for: selectedMac.id) != nil { return "Réseau local disponible" }
         if selectedMac.tailscaleHost != nil { return "Tailscale configuré" }
@@ -93,11 +104,15 @@ final class CompanionModel: ObservableObject {
             availableIdentifiers: pairedMacs.map(\.id)
         )
         selectedMac = pairedMacs.first { $0.id == selectedIdentifier }
+        restoreCachedStatus(for: selectedMac)
         persistSelectedMac()
     }
 
     func startBrowsing() {
         guard browser == nil else { return }
+        let generation = UUID()
+        browserGeneration = generation
+        isBrowserReady = false
         let descriptor = NWBrowser.Descriptor.bonjour(type: CapoteRemoteProtocol.bonjourType, domain: nil)
         let browser = NWBrowser(for: descriptor, using: CompanionNetworkParameters.localTCP())
         browser.browseResultsChangedHandler = { [weak self] results, _ in
@@ -107,18 +122,13 @@ final class CompanionModel: ObservableObject {
                 return (identifier, result.endpoint)
             }
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.browserGeneration == generation else { return }
                 self.discoveredMacs = endpoints.map { identifier, endpoint in
                     let displayName = self.pairedMacs.first(where: { $0.id == identifier })?.name
                         ?? "Mac avec Capote"
                     return DiscoveredMac(id: identifier, name: displayName, endpoint: endpoint)
                 }.sorted { $0.name < $1.name }
-                if self.shouldRefreshWhenSelectedMacIsDiscovered,
-                   let selectedIdentifier = self.selectedMac?.id,
-                   endpoints.contains(where: { $0.0 == selectedIdentifier }) {
-                    self.shouldRefreshWhenSelectedMacIsDiscovered = false
-                    self.scheduleAutomaticRefresh(for: selectedIdentifier)
-                }
+                self.refreshWhenLocalBrowsingIsReady()
                 if endpoints.isEmpty, self.successfulConnectionLabel == "Réseau local" {
                     self.successfulConnectionLabel = nil
                 }
@@ -126,19 +136,29 @@ final class CompanionModel: ObservableObject {
         }
         browser.stateUpdateHandler = { [weak self] state in
             switch state {
+            case .ready:
+                Task { @MainActor in
+                    guard let self, self.browserGeneration == generation else { return }
+                    self.isBrowserReady = true
+                    self.refreshWhenLocalBrowsingIsReady()
+                }
             case .waiting(let error), .failed(let error):
                 Task { @MainActor in
-                    self?.discoveredMacs = []
-                    if self?.successfulConnectionLabel == "Réseau local" {
-                        self?.successfulConnectionLabel = nil
+                    guard let self, self.browserGeneration == generation else { return }
+                    self.isBrowserReady = false
+                    self.discoveredMacs = []
+                    if self.successfulConnectionLabel == "Réseau local" {
+                        self.successfulConnectionLabel = nil
                     }
-                    self?.message = "Recherche locale impossible : \(error.localizedDescription)"
+                    self.message = "Recherche locale impossible : \(error.localizedDescription)"
                 }
             case .cancelled:
                 Task { @MainActor in
-                    self?.discoveredMacs = []
-                    if self?.successfulConnectionLabel == "Réseau local" {
-                        self?.successfulConnectionLabel = nil
+                    guard let self, self.browserGeneration == generation else { return }
+                    self.isBrowserReady = false
+                    self.discoveredMacs = []
+                    if self.successfulConnectionLabel == "Réseau local" {
+                        self.successfulConnectionLabel = nil
                     }
                 }
             default:
@@ -158,8 +178,6 @@ final class CompanionModel: ObservableObject {
     }
 
     func handleActivation() {
-        automaticRefreshTask?.cancel()
-        automaticRefreshTask = nil
         shouldRefreshWhenSelectedMacIsDiscovered = selectedMac != nil
         restartBrowsing()
 
@@ -170,28 +188,26 @@ final class CompanionModel: ObservableObject {
     }
 
     func refresh() {
-        automaticRefreshTask?.cancel()
-        automaticRefreshTask = nil
         if selectedMac != nil { send(.status) }
     }
 
-    private func scheduleAutomaticRefresh(for identifier: UUID) {
-        automaticRefreshTask?.cancel()
-        automaticRefreshTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(750))
-            guard !Task.isCancelled,
-                  let self,
-                  self.selectedMac?.id == identifier else { return }
-            self.refresh()
-        }
+    private func refreshWhenLocalBrowsingIsReady() {
+        guard shouldRefreshWhenSelectedMacIsDiscovered,
+              isBrowserReady,
+              let selectedIdentifier = selectedMac?.id,
+              endpoint(for: selectedIdentifier) != nil else { return }
+        shouldRefreshWhenSelectedMacIsDiscovered = false
+        refresh()
     }
 
     func select(_ mac: PairedMac) {
         selectedMac = mac
         status = nil
+        lastStatusUpdate = nil
         statusPresentation = .unknown
         successfulConnectionLabel = nil
         persistSelectedMac()
+        restoreCachedStatus(for: mac)
         send(.status)
     }
 
@@ -274,14 +290,20 @@ final class CompanionModel: ObservableObject {
     }
 
     func send(_ action: RemoteCommandAction) {
-        guard !isConnecting,
-              let mac = selectedMac,
-              let transport = transport(for: mac),
+        guard !isConnecting else { return }
+        guard let mac = selectedMac,
               let key = keyStore.key(for: mac.id) else {
             status = nil
+            lastStatusUpdate = nil
             statusPresentation = .unavailable
             successfulConnectionLabel = nil
-            message = "Ce Mac n’est disponible ni localement ni via une adresse Tailscale configurée."
+            message = "La clé de jumelage de ce Mac n’est plus disponible."
+            return
+        }
+        guard let transport = transport(for: mac) else {
+            preserveCachedStatusAfterFailure(
+                "Ce Mac n’est disponible ni localement ni via une adresse Tailscale configurée."
+            )
             return
         }
 
@@ -324,30 +346,36 @@ final class CompanionModel: ObservableObject {
                             throw CompanionError.unexpectedResponse
                         }
                         self.status = response.status
-                        self.statusPresentation = response.status == nil ? .unknown : .current
+                        if let status = response.status {
+                            let updatedAt = Date()
+                            self.lastStatusUpdate = updatedAt
+                            self.statusPresentation = .current
+                            self.saveCachedStatus(status, for: mac.id, updatedAt: updatedAt)
+                        } else {
+                            self.lastStatusUpdate = nil
+                            self.statusPresentation = .unknown
+                        }
                         self.adoptTailscaleHost(response.status?.tailscaleHost, for: mac.id)
                         self.successfulConnectionLabel = transportResponse.connectionLabel
                         self.message = response.message
                     } catch CompanionError.remoteRejected {
                         self.status = nil
+                        self.lastStatusUpdate = nil
                         self.statusPresentation = .unavailable
                         self.successfulConnectionLabel = nil
+                        self.clearCachedStatus(for: mac.id)
                         self.message = "Le Mac a refusé cette clé de jumelage. Oubliez ce Mac sur l’iPhone, puis jumelez-le à nouveau avec un nouveau code."
                     } catch {
-                        self.status = nil
-                        self.statusPresentation = .unavailable
-                        self.successfulConnectionLabel = nil
-                        self.message = "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
+                        self.preserveCachedStatusAfterFailure(
+                            "Réponse du Mac invalide ou connexion \(transport.connectionLabel) interrompue."
+                        )
                     }
                 }
             }
         } catch {
             activeRequestIdentifier = nil
             isConnecting = false
-            status = nil
-            statusPresentation = .unavailable
-            successfulConnectionLabel = nil
-            message = "Impossible de préparer la commande."
+            preserveCachedStatusAfterFailure("Impossible de préparer la commande.")
         }
     }
 
@@ -356,12 +384,15 @@ final class CompanionModel: ObservableObject {
         keyStore.remove(for: mac.id)
         pairedMacs.removeAll { $0.id == mac.id }
         savePairedMacs()
+        clearCachedStatus(for: mac.id)
         if selectedMac?.id == mac.id {
             selectedMac = pairedMacs.first
             status = nil
+            lastStatusUpdate = nil
             statusPresentation = .unknown
             successfulConnectionLabel = nil
             persistSelectedMac()
+            restoreCachedStatus(for: selectedMac)
         }
         message = "Mac oublié sur cet iPhone. Jumelez-le à nouveau depuis le même réseau local."
     }
@@ -449,6 +480,41 @@ final class CompanionModel: ObservableObject {
     private static func loadPairedMacs() -> [PairedMac] {
         guard let data = UserDefaults.standard.data(forKey: DefaultsKey.pairedMacs) else { return [] }
         return (try? JSONDecoder.capoteRemote.decode([PairedMac].self, from: data)) ?? []
+    }
+
+    private static func loadCachedStatus() -> CachedRemoteStatus? {
+        guard let data = UserDefaults.standard.data(forKey: DefaultsKey.cachedStatus) else { return nil }
+        return try? JSONDecoder.capoteRemote.decode(CachedRemoteStatus.self, from: data)
+    }
+
+    private func restoreCachedStatus(for mac: PairedMac?) {
+        guard let mac,
+              let cached = Self.loadCachedStatus(),
+              cached.macIdentifier == mac.id else { return }
+        status = cached.status
+        lastStatusUpdate = cached.updatedAt
+        statusPresentation = .cached
+    }
+
+    private func saveCachedStatus(_ status: RemoteMacStatus, for identifier: UUID, updatedAt: Date) {
+        let cached = CachedRemoteStatus(macIdentifier: identifier, status: status, updatedAt: updatedAt)
+        UserDefaults.standard.set(try? JSONEncoder.capoteRemote.encode(cached), forKey: DefaultsKey.cachedStatus)
+    }
+
+    private func clearCachedStatus(for identifier: UUID) {
+        guard Self.loadCachedStatus()?.macIdentifier == identifier else { return }
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.cachedStatus)
+    }
+
+    private func preserveCachedStatusAfterFailure(_ failureMessage: String) {
+        successfulConnectionLabel = nil
+        if status != nil {
+            statusPresentation = .cached
+            message = "Actualisation impossible. Le dernier état connu est conservé."
+        } else {
+            statusPresentation = .unavailable
+            message = failureMessage
+        }
     }
 
     private func savePairedMacs() {

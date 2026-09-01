@@ -29,6 +29,13 @@ struct CompanionContentView: View {
                         LabeledContent("Connexion", value: model.connectionText)
                         LabeledContent("Veille capot fermé", value: model.sleepStateText)
 
+                        if let lastStatusUpdate = model.lastStatusUpdate {
+                            LabeledContent(
+                                "Mis à jour",
+                                value: lastStatusUpdate.formatted(date: .abbreviated, time: .standard)
+                            )
+                        }
+
                         if let host = selected.tailscaleHost {
                             LabeledContent("Adresse distante", value: host)
                         }
