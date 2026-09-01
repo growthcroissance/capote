@@ -55,6 +55,7 @@ final class CompanionModel: ObservableObject {
     private var browser: NWBrowser?
     private var activeRequestIdentifier: UUID?
     private var shouldRefreshWhenSelectedMacIsDiscovered = false
+    private var automaticRefreshTask: Task<Void, Never>?
 
     private enum DefaultsKey {
         static let deviceIdentifier = "companion.deviceIdentifier"
@@ -116,7 +117,7 @@ final class CompanionModel: ObservableObject {
                    let selectedIdentifier = self.selectedMac?.id,
                    endpoints.contains(where: { $0.0 == selectedIdentifier }) {
                     self.shouldRefreshWhenSelectedMacIsDiscovered = false
-                    self.refresh()
+                    self.scheduleAutomaticRefresh(for: selectedIdentifier)
                 }
                 if endpoints.isEmpty, self.successfulConnectionLabel == "Réseau local" {
                     self.successfulConnectionLabel = nil
@@ -157,6 +158,8 @@ final class CompanionModel: ObservableObject {
     }
 
     func handleActivation() {
+        automaticRefreshTask?.cancel()
+        automaticRefreshTask = nil
         shouldRefreshWhenSelectedMacIsDiscovered = selectedMac != nil
         restartBrowsing()
 
@@ -167,7 +170,20 @@ final class CompanionModel: ObservableObject {
     }
 
     func refresh() {
+        automaticRefreshTask?.cancel()
+        automaticRefreshTask = nil
         if selectedMac != nil { send(.status) }
+    }
+
+    private func scheduleAutomaticRefresh(for identifier: UUID) {
+        automaticRefreshTask?.cancel()
+        automaticRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(750))
+            guard !Task.isCancelled,
+                  let self,
+                  self.selectedMac?.id == identifier else { return }
+            self.refresh()
+        }
     }
 
     func select(_ mac: PairedMac) {

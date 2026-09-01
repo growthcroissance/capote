@@ -42,7 +42,7 @@ struct CompanionContentView: View {
                         }
 
                         Button("Actualiser l’état") {
-                            model.send(.status)
+                            model.refresh()
                         }
 
                         if model.isConnecting {
