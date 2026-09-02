@@ -52,6 +52,25 @@ final class RemoteControlCoreTests: XCTestCase {
         XCTAssertEqual(status.isSleepDisabled, false)
         XCTAssertFalse(status.canRestoreActiveSession)
         XCTAssertNil(status.tailscaleHost)
+        XCTAssertNil(status.batteryLevelPercent)
+        XCTAssertNil(status.powerSource)
+    }
+
+    func testRemoteStatusRoundTripsMacBookPowerStatus() throws {
+        let status = RemoteMacStatus(
+            isSleepDisabled: true,
+            canRestoreActiveSession: true,
+            activeSessionDescription: "Session sans limite",
+            sessionEndDate: nil,
+            batteryLevelPercent: 73,
+            powerSource: .externalPower
+        )
+
+        let data = try JSONEncoder.capoteRemote.encode(status)
+        let decoded = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: data)
+
+        XCTAssertEqual(decoded.batteryLevelPercent, 73)
+        XCTAssertEqual(decoded.powerSource, .externalPower)
     }
 
     func testLocalRouteIsPreferredWhenAvailable() {
