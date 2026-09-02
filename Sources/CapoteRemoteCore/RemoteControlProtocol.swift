@@ -84,6 +84,11 @@ public final class RemoteCommandValidator: @unchecked Sendable {
     }
 }
 
+public enum RemotePowerSource: String, Codable, Equatable, Sendable {
+    case externalPower
+    case battery
+}
+
 public struct RemoteMacStatus: Codable, Equatable, Sendable {
     public let isSleepDisabled: Bool?
     public let canRestoreActiveSession: Bool
@@ -91,6 +96,8 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
     public let sessionEndDate: Date?
     public let thermalSafetyTriggered: Bool
     public let tailscaleHost: String?
+    public let batteryLevelPercent: Int?
+    public let powerSource: RemotePowerSource?
 
     public init(
         isSleepDisabled: Bool?,
@@ -98,7 +105,9 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
         activeSessionDescription: String?,
         sessionEndDate: Date?,
         thermalSafetyTriggered: Bool = false,
-        tailscaleHost: String? = nil
+        tailscaleHost: String? = nil,
+        batteryLevelPercent: Int? = nil,
+        powerSource: RemotePowerSource? = nil
     ) {
         self.isSleepDisabled = isSleepDisabled
         self.canRestoreActiveSession = canRestoreActiveSession
@@ -106,6 +115,8 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
         self.sessionEndDate = sessionEndDate
         self.thermalSafetyTriggered = thermalSafetyTriggered
         self.tailscaleHost = tailscaleHost
+        self.batteryLevelPercent = batteryLevelPercent
+        self.powerSource = powerSource
     }
 }
 

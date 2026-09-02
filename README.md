@@ -34,8 +34,9 @@ lu ni conservé par l'application.
 - compagnon iOS personnel avec découverte et jumelage Bonjour sur le réseau
   local, puis accès distant facultatif par le réseau privé Tailscale de
   l’utilisateur ;
-- consultation de l’état du Mac, arrêt d’une session Capote déjà active et
-  révocation locale des iPhone jumelés.
+- consultation de l’état du Mac, de son alimentation et de sa batterie lorsqu’il
+  s’agit d’un MacBook, arrêt d’une session Capote déjà active et révocation
+  locale des iPhone jumelés.
 
 Les sessions limitées continuent même si Capote est quittée et rétablissent la
 veille lorsque leur condition prend fin. Une session sans limite reste active

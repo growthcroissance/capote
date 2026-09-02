@@ -149,12 +149,15 @@ final class RemoteControlController: ObservableObject {
 
     private static func currentStatus() -> RemoteMacStatus {
         let controller = SleepControlController.shared
+        let powerStatus = MacPowerStatusProvider.current()
         return RemoteMacStatus(
             isSleepDisabled: controller.isSleepDisabled,
             canRestoreActiveSession: controller.hasCancellableSession,
             activeSessionDescription: controller.activeSessionDescription,
             sessionEndDate: controller.sessionEndDate,
-            tailscaleHost: TailscaleAddressResolver.currentIPv4()
+            tailscaleHost: TailscaleAddressResolver.currentIPv4(),
+            batteryLevelPercent: powerStatus?.batteryLevelPercent,
+            powerSource: powerStatus?.powerSource
         )
     }
 }

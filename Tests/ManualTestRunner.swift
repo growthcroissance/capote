@@ -22,11 +22,13 @@ struct ManualTestRunner {
         testRemoteFrameCodec()
         testRemoteTamperRejection()
         testRemoteExpiredCommandRejection()
+        testLegacyRemoteStatusWithoutPowerInformation()
+        testRemoteMacBookPowerStatus()
         testTailscaleAddressValidation()
         testTailscaleCLIOutputParsing()
         testTailscaleRoutePreference()
         testCompanionSelectionFallback()
-        print("22 tests réussis")
+        print("24 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -331,6 +333,52 @@ struct ManualTestRunner {
             expect(true, "commande distante expirée rejetée")
         } catch {
             expect(false, "commande distante expirée rejetée")
+        }
+    }
+
+    private static func testLegacyRemoteStatusWithoutPowerInformation() {
+        let data = Data(
+            """
+            {
+              "isSleepDisabled": false,
+              "canRestoreActiveSession": false,
+              "activeSessionDescription": null,
+              "sessionEndDate": null,
+              "thermalSafetyTriggered": false
+            }
+            """.utf8
+        )
+
+        do {
+            let status = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: data)
+            expect(
+                status.batteryLevelPercent == nil && status.powerSource == nil,
+                "ancien état distant sans batterie compatible"
+            )
+        } catch {
+            expect(false, "ancien état distant sans batterie compatible")
+        }
+    }
+
+    private static func testRemoteMacBookPowerStatus() {
+        let status = RemoteMacStatus(
+            isSleepDisabled: true,
+            canRestoreActiveSession: true,
+            activeSessionDescription: "Session sans limite",
+            sessionEndDate: nil,
+            batteryLevelPercent: 73,
+            powerSource: .externalPower
+        )
+
+        do {
+            let data = try JSONEncoder.capoteRemote.encode(status)
+            let decoded = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: data)
+            expect(
+                decoded.batteryLevelPercent == 73 && decoded.powerSource == .externalPower,
+                "état batterie MacBook transmis"
+            )
+        } catch {
+            expect(false, "état batterie MacBook transmis")
         }
     }
 

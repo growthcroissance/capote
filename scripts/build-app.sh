@@ -47,6 +47,7 @@ for capote_arch in arm64 x86_64; do
         "$project_dir/Sources/Capote/AppUpdater.swift" \
         "$project_dir/Sources/Capote/CapoteApp.swift" \
         "$project_dir/Sources/Capote/LaunchAtLoginController.swift" \
+        "$project_dir/Sources/Capote/MacPowerStatusProvider.swift" \
         "$project_dir/Sources/Capote/MacRemoteAgent.swift" \
         "$project_dir/Sources/Capote/RemoteControlController.swift" \
         "$project_dir/Sources/Capote/RemoteDeviceKeyStore.swift" \

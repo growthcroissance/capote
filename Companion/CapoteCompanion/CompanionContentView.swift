@@ -29,6 +29,14 @@ struct CompanionContentView: View {
                         LabeledContent("Connexion", value: model.connectionText)
                         LabeledContent("Veille capot fermé", value: model.sleepStateText)
 
+                        if let powerSource = model.status?.powerSource {
+                            LabeledContent("Alimentation", value: powerSource.displayName)
+                        }
+
+                        if let batteryLevel = model.status?.batteryLevelPercent {
+                            LabeledContent("Batterie", value: "\(batteryLevel) %")
+                        }
+
                         if let lastStatusUpdate = model.lastStatusUpdate {
                             LabeledContent(
                                 "Mis à jour",
@@ -169,6 +177,15 @@ struct CompanionContentView: View {
                     model.handleActivation()
                 }
             }
+        }
+    }
+}
+
+private extension RemotePowerSource {
+    var displayName: String {
+        switch self {
+        case .externalPower: return "Adaptateur secteur"
+        case .battery: return "Batterie"
         }
     }
 }

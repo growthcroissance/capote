@@ -63,10 +63,12 @@ termine pas par `.ts.net`.
 
 ## Périmètre sans adhésion Apple payante
 
-Le prototype sait lire l’état du Mac et demander l’arrêt d’une session Capote
-déjà active. Il ne contient aucun daemon root et ne permet pas de démarrer une
-session depuis l’iPhone. L’activation initiale et son autorisation administrateur
-restent donc effectuées sur le Mac ; l’iPhone sert ensuite au suivi et à l’arrêt.
+Le prototype sait lire l’état du Mac, ainsi que la source d’alimentation et le
+niveau de batterie lorsqu’il s’agit d’un MacBook, puis demander l’arrêt d’une
+session Capote déjà active. Il ne contient aucun daemon root et ne permet pas de
+démarrer une session depuis l’iPhone. L’activation initiale et son autorisation
+administrateur restent donc effectuées sur le Mac ; l’iPhone sert ensuite au
+suivi et à l’arrêt.
 
 Le Mac doit rester éveillé, en ligne et Capote doit rester ouverte avec le
 contrôle iPhone activé. Aucun protocole de cette branche ne réveille un Mac déjà
