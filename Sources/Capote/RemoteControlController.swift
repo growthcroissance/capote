@@ -155,10 +155,21 @@ final class RemoteControlController: ObservableObject {
             canRestoreActiveSession: controller.hasCancellableSession,
             activeSessionDescription: controller.activeSessionDescription,
             sessionEndDate: controller.sessionEndDate,
+            thermalState: currentThermalState(),
             tailscaleHost: TailscaleAddressResolver.currentIPv4(),
             batteryLevelPercent: powerStatus?.batteryLevelPercent,
             powerSource: powerStatus?.powerSource
         )
+    }
+
+    private static func currentThermalState() -> RemoteThermalState {
+        switch ProcessInfo.processInfo.thermalState {
+        case .nominal: return .nominal
+        case .fair: return .fair
+        case .serious: return .serious
+        case .critical: return .critical
+        @unknown default: return .unknown
+        }
     }
 }
 

@@ -89,12 +89,21 @@ public enum RemotePowerSource: String, Codable, Equatable, Sendable {
     case battery
 }
 
+public enum RemoteThermalState: String, Codable, Equatable, Sendable {
+    case nominal
+    case fair
+    case serious
+    case critical
+    case unknown
+}
+
 public struct RemoteMacStatus: Codable, Equatable, Sendable {
     public let isSleepDisabled: Bool?
     public let canRestoreActiveSession: Bool
     public let activeSessionDescription: String?
     public let sessionEndDate: Date?
     public let thermalSafetyTriggered: Bool
+    public let thermalState: RemoteThermalState?
     public let tailscaleHost: String?
     public let batteryLevelPercent: Int?
     public let powerSource: RemotePowerSource?
@@ -105,6 +114,7 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
         activeSessionDescription: String?,
         sessionEndDate: Date?,
         thermalSafetyTriggered: Bool = false,
+        thermalState: RemoteThermalState? = nil,
         tailscaleHost: String? = nil,
         batteryLevelPercent: Int? = nil,
         powerSource: RemotePowerSource? = nil
@@ -114,6 +124,7 @@ public struct RemoteMacStatus: Codable, Equatable, Sendable {
         self.activeSessionDescription = activeSessionDescription
         self.sessionEndDate = sessionEndDate
         self.thermalSafetyTriggered = thermalSafetyTriggered
+        self.thermalState = thermalState
         self.tailscaleHost = tailscaleHost
         self.batteryLevelPercent = batteryLevelPercent
         self.powerSource = powerSource

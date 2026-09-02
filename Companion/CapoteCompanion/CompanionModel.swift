@@ -94,6 +94,19 @@ final class CompanionModel: ObservableObject {
         }
     }
 
+    var thermalStateText: String {
+        if isConnecting { return "Actualisation…" }
+        if statusPresentation == .unavailable { return "Indisponible" }
+        switch status?.thermalState {
+        case .nominal: return "Normale"
+        case .fair: return "Modérée"
+        case .serious: return "Élevée"
+        case .critical: return "Critique"
+        case .unknown: return "Indéterminée"
+        case nil: return "Indisponible"
+        }
+    }
+
     init() {
         pairedMacs = Self.loadPairedMacs()
         let persistedIdentifier = UserDefaults.standard

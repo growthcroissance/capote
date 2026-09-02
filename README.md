@@ -183,6 +183,10 @@ solution de secours. Les commandes ont une validité de 30 secondes, sont
 protégées contre le rejeu et
 sont chiffrées avec ChaCha20-Poly1305.
 
+La fiche du Mac affiche aussi son niveau thermique système : normal, modéré,
+élevé ou critique. Cet indicateur est fourni par macOS et ne correspond pas à
+une mesure de capteur en degrés Celsius.
+
 Après ce jumelage local, l’utilisateur peut enregistrer dans le compagnon le
 nom MagicDNS complet en `.ts.net` ou l’adresse IP Tailscale du Mac. Le même
 protocole chiffré passe alors sur le port privé `51684`. Capote refuse les noms

@@ -24,11 +24,12 @@ struct ManualTestRunner {
         testRemoteExpiredCommandRejection()
         testLegacyRemoteStatusWithoutPowerInformation()
         testRemoteMacBookPowerStatus()
+        testRemoteThermalStatusCompatibility()
         testTailscaleAddressValidation()
         testTailscaleCLIOutputParsing()
         testTailscaleRoutePreference()
         testCompanionSelectionFallback()
-        print("24 tests réussis")
+        print("25 tests réussis")
     }
 
     private static func testEnabledState() {
@@ -379,6 +380,37 @@ struct ManualTestRunner {
             )
         } catch {
             expect(false, "état batterie MacBook transmis")
+        }
+    }
+
+    private static func testRemoteThermalStatusCompatibility() {
+        do {
+            let current = RemoteMacStatus(
+                isSleepDisabled: true,
+                canRestoreActiveSession: true,
+                activeSessionDescription: "Session active",
+                sessionEndDate: nil,
+                thermalState: .serious
+            )
+            let currentData = try JSONEncoder.capoteRemote.encode(current)
+            let decodedCurrent = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: currentData)
+            expect(decodedCurrent.thermalState == .serious, "niveau thermique transmis au compagnon")
+
+            let legacyData = Data(
+                """
+                {
+                  "isSleepDisabled": false,
+                  "canRestoreActiveSession": false,
+                  "activeSessionDescription": null,
+                  "sessionEndDate": null,
+                  "thermalSafetyTriggered": false
+                }
+                """.utf8
+            )
+            let decodedLegacy = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: legacyData)
+            expect(decodedLegacy.thermalState == nil, "ancien état distant toujours compatible")
+        } catch {
+            expect(false, "compatibilité du niveau thermique distant")
         }
     }
 
