@@ -203,8 +203,15 @@ private struct ThermalStatusLabel: View {
     let isRefreshing: Bool
 
     var body: some View {
-        Label(text, systemImage: symbolName)
+        HStack(spacing: 8) {
+            Image(systemName: symbolName)
+                .imageScale(.medium)
+                .frame(width: 20, height: 20)
+            Text(text)
+        }
+            .fixedSize(horizontal: true, vertical: true)
             .foregroundStyle(statusColor)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel("Température du Mac : \(text)")
     }
 
