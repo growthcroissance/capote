@@ -28,6 +28,13 @@ struct CompanionContentView: View {
                     Section("\(selected.name)") {
                         LabeledContent("Connexion", value: model.connectionText)
                         LabeledContent("Veille capot fermé", value: model.sleepStateText)
+                        LabeledContent("Température") {
+                            ThermalStatusLabel(
+                                state: model.status?.thermalState,
+                                text: model.thermalStateText,
+                                isRefreshing: model.isConnecting
+                            )
+                        }
 
                         if let lastStatusUpdate = model.lastStatusUpdate {
                             LabeledContent(
@@ -169,6 +176,40 @@ struct CompanionContentView: View {
                     model.handleActivation()
                 }
             }
+        }
+    }
+}
+
+private struct ThermalStatusLabel: View {
+    let state: RemoteThermalState?
+    let text: String
+    let isRefreshing: Bool
+
+    var body: some View {
+        Label(text, systemImage: symbolName)
+            .foregroundStyle(statusColor)
+            .accessibilityLabel("Température du Mac : \(text)")
+    }
+
+    private var symbolName: String {
+        if isRefreshing { return "arrow.triangle.2.circlepath" }
+        switch state {
+        case .nominal: return "thermometer.low"
+        case .fair: return "thermometer.medium"
+        case .serious: return "thermometer.high"
+        case .critical: return "exclamationmark.triangle.fill"
+        case .unknown, nil: return "thermometer"
+        }
+    }
+
+    private var statusColor: Color {
+        if isRefreshing { return .secondary }
+        switch state {
+        case .nominal: return .green
+        case .fair: return .yellow
+        case .serious: return .orange
+        case .critical: return .red
+        case .unknown, nil: return .secondary
         }
     }
 }

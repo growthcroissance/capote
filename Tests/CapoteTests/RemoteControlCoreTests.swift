@@ -51,7 +51,23 @@ final class RemoteControlCoreTests: XCTestCase {
         let status = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: legacyJSON)
         XCTAssertEqual(status.isSleepDisabled, false)
         XCTAssertFalse(status.canRestoreActiveSession)
+        XCTAssertNil(status.thermalState)
         XCTAssertNil(status.tailscaleHost)
+    }
+
+    func testRemoteStatusRoundTripsThermalState() throws {
+        let status = RemoteMacStatus(
+            isSleepDisabled: true,
+            canRestoreActiveSession: true,
+            activeSessionDescription: "Session active",
+            sessionEndDate: nil,
+            thermalState: .serious
+        )
+
+        let data = try JSONEncoder.capoteRemote.encode(status)
+        let decoded = try JSONDecoder.capoteRemote.decode(RemoteMacStatus.self, from: data)
+
+        XCTAssertEqual(decoded.thermalState, .serious)
     }
 
     func testLocalRouteIsPreferredWhenAvailable() {

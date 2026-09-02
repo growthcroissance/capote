@@ -7,6 +7,10 @@ photo de l’iPhone ; la saisie manuelle du code reste disponible. Une clé
 distincte est ensuite conservée dans le Trousseau de chaque
 appareil ; les commandes et réponses sont chiffrées avec ChaCha20-Poly1305.
 
+La fiche du Mac présente son niveau thermique fourni par macOS avec quatre
+niveaux lisibles : normal, modéré, élevé et critique. Il s’agit d’un indicateur
+système, pas d’une température de capteur exprimée en degrés Celsius.
+
 Une fois jumelé, le compagnon peut aussi joindre le Mac à travers le réseau
 privé Tailscale de l’utilisateur. Ce chemin est un transport supplémentaire : il
 ne remplace ni les clés Capote, ni l’expiration de 30 secondes, ni la protection
